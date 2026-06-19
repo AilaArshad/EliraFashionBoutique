@@ -1,0 +1,132 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace EliraFashionBoutique.Models;
+
+public class EliraDbContext : DbContext
+{
+    public EliraDbContext(DbContextOptions<EliraDbContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Category> Categories { get; set; }
+    public virtual DbSet<SubCategory> SubCategories { get; set; }
+    public virtual DbSet<Promotion> Promotions { get; set; }
+    public virtual DbSet<Color> Colors { get; set; }
+    public virtual DbSet<Size> Sizes { get; set; }
+    public virtual DbSet<Product> Products { get; set; }
+    public virtual DbSet<ProductVariant> ProductVariants { get; set; }
+    public virtual DbSet<ProductImage> ProductImages { get; set; }
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.HasKey(e => e.CategoryId);
+            entity.Property(e => e.CategoryName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.Description).HasColumnType("text");
+        });
+
+        modelBuilder.Entity<SubCategory>(entity =>
+        {
+            entity.HasKey(e => e.SubCategoryId);
+            entity.Property(e => e.SubcategoryName).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.SeasonType).IsRequired().HasMaxLength(100);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+
+            entity.HasOne(d => d.Category)
+                .WithMany(p => p.SubCategories)
+                .HasForeignKey(d => d.CategoryId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Promotion>(entity =>
+        {
+            entity.HasKey(e => e.PromotionId);
+            entity.Property(e => e.PromotionDiscount).HasMaxLength(50);
+            entity.Property(e => e.DiscountName).HasMaxLength(100);
+            entity.Property(e => e.DiscountType).HasMaxLength(50);
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+
+            entity.HasOne(d => d.SubCategory)
+                .WithMany(p => p.Promotions)
+                .HasForeignKey(d => d.SubCategoryId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<Color>(entity =>
+        {
+            entity.HasKey(e => e.ColorId);
+            entity.Property(e => e.ColorName).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.HexCode).HasMaxLength(7);
+        });
+
+        modelBuilder.Entity<Size>(entity =>
+        {
+            entity.HasKey(e => e.SizeId);
+            entity.Property(e => e.SizeName).IsRequired().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<Product>(entity =>
+        {
+            entity.HasKey(e => e.ProductId);
+            entity.Property(e => e.ProductName).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.Description).HasColumnType("text");
+            entity.Property(e => e.BasePrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.SKU).HasMaxLength(100);
+            entity.HasIndex(e => e.SKU).IsUnique().HasFilter("[SKU] IS NOT NULL");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+
+            entity.HasOne(d => d.SubCategory)
+                .WithMany(p => p.Products)
+                .HasForeignKey(d => d.SubCategoryId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ProductVariant>(entity =>
+        {
+            entity.HasKey(e => e.VariantId);
+            entity.Property(e => e.VariantPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Weight).HasColumnType("decimal(5, 2)");
+            entity.Property(e => e.VariantSKU).HasMaxLength(100);
+            entity.HasIndex(e => e.VariantSKU).IsUnique().HasFilter("[VariantSKU] IS NOT NULL");
+            entity.Property(e => e.IsActive).HasDefaultValue(true);
+
+            entity.HasIndex(e => new { e.ProductId, e.SizeId, e.ColorId }).IsUnique()
+                .HasFilter("[ProductId] IS NOT NULL AND [SizeId] IS NOT NULL AND [ColorId] IS NOT NULL");
+
+            entity.HasOne(d => d.Product)
+                .WithMany(p => p.ProductVariants)
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Size)
+                .WithMany()
+                .HasForeignKey(d => d.SizeId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.Color)
+                .WithMany()
+                .HasForeignKey(d => d.ColorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ProductImage>(entity =>
+        {
+            entity.HasKey(e => e.ImageId);
+            entity.Property(e => e.ImageURL).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.IsPrimary).HasDefaultValue(true);
+
+            entity.HasOne(d => d.Product)
+                .WithMany(p => p.ProductImages)
+                .HasForeignKey(d => d.ProductId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Color)
+                .WithMany()
+                .HasForeignKey(d => d.ColorId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+    }
+}

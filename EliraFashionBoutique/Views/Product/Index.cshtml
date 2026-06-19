@@ -1,0 +1,1165 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elira ERP - Product Catalog Studio</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --panel-bg: #1e2640;
+            --panel-hover: #263154;
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --body-bg: #f8fafc;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+        /* Main Workspace Structural Layouts */
+        .main-content {
+            padding: 40px;
+            width: 100%;
+        }
+        .page-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+            margin-bottom: 32px;
+        }
+        .content-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+        }
+        .card-title-bar {
+            padding: 18px 24px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #fff;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+        /* Registry Control Ledger Presentation Styles */
+        .table th {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            background-color: #f8fafc;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .table td {
+            padding: 16px 20px;
+            font-size: 0.88rem;
+            color: #334155;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .btn-action {
+            font-size: 0.8rem;
+            font-weight: 500;
+            border: 1px solid var(--border-color);
+            background: #fff;
+            color: #475569;
+            padding: 6px 12px;
+            border-radius: 4px;
+            transition: all 0.15s ease;
+        }
+        .btn-action:hover { background: #f1f5f9; color: var(--text-dark); }
+        .btn-danger-alt { color: #dc2626; border-color: #fca5a5; }
+        .btn-danger-alt:hover { background: #fef2f2; color: #b91c1c; }
+        
+        .wizard-step-badge {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #e2e8f0;
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        .active-step .wizard-step-badge {
+            background: var(--panel-bg);
+            color: #fff;
+        }
+        .form-section-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #475569;
+            letter-spacing: 0.5px;
+        }
+
+        /* Color Media Grid Structures */
+        .gallery-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 15px;
+        }
+        .media-row {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .media-thumbnail-placeholder {
+            width: 40px;
+            height: 40px;
+            background: #f1f5f9;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+        .media-thumbnail-placeholder.active-star {
+            color: #198754;
+            background: #f0fdf4;
+            border: 1px dashed #bbf7d0;
+        }
+
+        /* Ledger Asset Map Sub-blocks */
+        .ledger-color-block {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+        .variant-tag-pill {
+            display: inline-flex;
+            align-items: center;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #334155;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.76rem;
+            font-weight: 500;
+        }
+
+        /* Smooth View State Transitions */
+        .view-pane {
+            display: none;
+        }
+        .view-pane.active-pane {
+            display: block;
+            animation: fadeInWorkspace 0.25s ease-in-out;
+        }
+        @@keyframes fadeInWorkspace {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Custom Toast Styles */
+        .toast-enter { transform: translateY(-1rem); opacity: 0; }
+        .toast-show { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
+    </style>
+</head>
+<body>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="position-fixed top-0 end-0 p-3 z-3 flex-column gap-2" style="display: flex; pointer-events: none;"></div>
+
+    <div class="main-content">
+        
+        <div class="page-header d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <h3 class="fw-bold tracking-tight m-0" id="studioPageTitle">Product Catalog Studio</h3>
+                <p class="text-muted small m-0 mt-1" id="studioPageSubtitle">Configure master records, dynamic image galleries, and track variant logs instantly.</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a class="btn btn-outline-secondary btn-sm py-2 px-3" href="/Category/Index" style="font-size: 0.85rem;">
+                    <i class="fa-solid fa-circle-arrow-left me-1"></i> Go to Categories Terminal
+                </a>
+                <button class="btn btn-dark btn-sm py-2 px-3" style="background: var(--panel-bg); font-size: 0.85rem;" type="button" id="toggleWorkspaceStateBtn" onclick="toggleWorkspaceViewFrame()">
+                    <i class="fa-solid fa-sliders me-1"></i> Toggle Configuration Workspace Flow
+                </button>
+            </div>
+        </div>
+
+        <div id="ledgerViewPane" class="view-pane active-pane">
+            <div class="content-card">
+                <div class="card-title-bar d-flex justify-content-between align-items-center bg-light border-bottom">
+                    <h6 class="fw-bold m-0 text-dark"><i class="fa-solid fa-database text-secondary me-2"></i>Active Master Operational Product Records Inventory</h6>
+                    <div class="d-flex gap-2">
+                        <input type="text" class="form-control form-control-sm border" placeholder="Search operational catalog..." style="width:260px;" id="ledgerSearchInput" oninput="filterLedgerRows()">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 25%;">Product Configuration Details</th>
+                                <th style="width: 20%;">Hierarchy Lineage</th>
+                                <th style="width: 12%;">Base Price</th>
+                                <th style="width: 35%;">Live Defined Attribute Combinations (Size / Photo Galleries Map)</th>
+                                <th style="width: 8%;" class="text-end">Actions Matrix</th>
+                            </tr>
+                        </thead>
+                        <tbody id="masterOperationalLedgerBody">
+                            <!-- Loaded Dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="formWorkspaceViewPane" class="view-pane">
+            <div class="content-card" style="border: 1px solid #cbd5e1 !important;">
+                <div class="card-title-bar d-flex justify-content-between align-items-center" style="background: #f1f5f9;">
+                    <div class="d-flex align-items-center gap-4">
+                        <span class="fw-bold text-dark m-0 small text-uppercase" id="formPanelHeadingMode"><i class="fa-solid fa-folder-plus me-2 text-secondary"></i>Create Product Entry Record</span>
+                        <div class="d-flex align-items-center gap-3 ms-4 d-none d-xl-flex">
+                            <span class="small active-step fw-medium"><span class="wizard-step-badge me-1">1</span> Hierarchy</span>
+                            <i class="fa-solid fa-chevron-right text-muted" style="font-size:0.7rem;"></i>
+                            <span class="small active-step fw-medium"><span class="wizard-step-badge me-1">2</span> Profile</span>
+                            <i class="fa-solid fa-chevron-right text-muted" style="font-size:0.7rem;"></i>
+                            <span class="small active-step fw-medium"><span class="wizard-step-badge me-1">3</span> Gallery Setup</span>
+                            <i class="fa-solid fa-chevron-right text-muted" style="font-size:0.7rem;"></i>
+                            <span class="small active-step fw-medium"><span class="wizard-step-badge me-1">4</span> Variants Array</span>
+                        </div>
+                    </div>
+                    <button class="btn-close" type="button" onclick="toggleWorkspaceViewFrame()"></button>
+                </div>
+                <div class="p-4">
+                    <form id="productStudioForm" onsubmit="event.preventDefault();">
+                        
+                        <input type="hidden" id="activeProductIdHidden" value="">
+
+                        <div class="mb-5">
+                            <div class="mb-2">
+                                <div class="form-section-title"><i class="fa-solid fa-diagram-project me-1 text-muted"></i> Step 1: Category Architecture Mapping</div>
+                                <p class="text-muted small m-0 mt-1">Associate this master record item with your primary collections and seasonal routing logic.</p>
+                            </div>
+                            <div class="p-3 rounded border bg-white shadow-sm">
+                                <div class="row g-3 mb-3">
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label small fw-semibold text-secondary">Select Category Mapping</label>
+                                        <select id="inputCategory" class="form-select form-select-sm" onchange="updateSubcategoriesDropdown()">
+                                            <!-- Loaded Dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label small fw-semibold text-secondary">Select Linked Subcategory</label>
+                                        <select id="inputSubCategory" class="form-select form-select-sm" onchange="updateSubcategoryDetails()">
+                                            <!-- Loaded Dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label small fw-semibold text-secondary">Assigned Season Collection Logic</label>
+                                        <input type="text" id="inputSeason" class="form-control form-control-sm" value="" readonly style="background-color: #f8fafc;">
+                                    </div>
+                                </div>
+                                
+                                <div class="row g-3 border-top pt-3">
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label small fw-semibold text-secondary">Available Subcategory Promotions</label>
+                                        <select id="inputPromotion" class="form-select form-select-sm" onchange="updatePromotionMetaDataDisplayBox()">
+                                            <!-- Loaded Dynamically -->
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label small fw-semibold text-secondary">Promotion Discount & Type</label>
+                                        <input type="text" id="inputPromoType" class="form-control form-control-sm" value="" readonly style="background-color: #f8fafc;">
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label small fw-semibold text-secondary">Promotion Validity Horizon Windows</label>
+                                        <input type="text" id="inputPromoTimeline" class="form-control form-control-sm" value="" readonly style="background-color: #f8fafc;" placeholder="YYYY-MM-DD to YYYY-MM-DD">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-5">
+                            <div class="mb-2">
+                                <div class="form-section-title"><i class="fa-solid fa-box-open me-1 text-muted"></i> Step 2: Master Profile Properties</div>
+                                <p class="text-muted small m-0 mt-1">Define core system parameters, base manufacturing cost structures, and global inventory identity tags.</p>
+                            </div>
+                            <div class="p-3 rounded border bg-white shadow-sm">
+                                <div class="row g-3 align-items-end mb-3">
+                                    <div class="col-12 col-md-5">
+                                        <label class="form-label small fw-semibold text-secondary">Product Base Title</label>
+                                        <input type="text" id="inputBaseName" class="form-control form-control-sm" value="">
+                                    </div>
+                                    <div class="col-12 col-md-2">
+                                        <label class="form-label small fw-semibold text-secondary">Base Price (PKR)</label>
+                                        <input type="number" id="inputBasePrice" class="form-control form-control-sm" value="">
+                                    </div>
+                                    <div class="col-12 col-md-3">
+                                        <label class="form-label small fw-semibold text-secondary">Operational Master SKU</label>
+                                        <input type="text" id="inputMasterSKU" class="form-control form-control-sm" value="">
+                                    </div>
+                                    <div class="col-12 col-md-2 pb-2">
+                                        <div class="form-check m-0">
+                                            <input class="form-check-input" type="checkbox" id="inputIsActive" checked>
+                                            <label class="form-check-label small fw-medium text-dark" for="inputIsActive">Live Active</label>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="form-label small fw-semibold text-secondary">Product Description Ledger</label>
+                                        <textarea id="inputDescription" class="form-control form-control-sm" rows="3" placeholder="Enter full detail logs, fabric profiles, structural properties specs here to match the database TEXT specification mapping schema structures..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-5">
+                            <div class="mb-2">
+                                <div class="form-section-title"><i class="fa-solid fa-images me-1 text-muted"></i> Step 3: Color Media Galleries (`Product_Images` Context)</div>
+                                <p class="text-muted small m-0 mt-1">Initialize gallery block frames to manage photo arrays and flag specific cover references.</p>
+                            </div>
+                            
+                            <div class="p-3 bg-light rounded border d-flex flex-wrap align-items-center gap-3 mb-3 mt-2">
+                                <div style="min-width: 250px;">
+                                    <label class="form-label small fw-bold text-dark mb-1">Pick Color to Instantiate Block File:</label>
+                                    <select class="form-select form-select-sm" id="factoryColorDropdown">
+                                        <!-- Loaded Dynamically -->
+                                    </select>
+                                </div>
+                                <div class="pt-4">
+                                    <button class="btn btn-sm btn-dark px-3" type="button" onclick="createNewGalleryBlockFromFactory()"><i class="fa-solid fa-square-plus me-1"></i> Initialize Color Gallery Box</button>
+                                </div>
+                            </div>
+
+                            <div class="row g-3" id="galleryContainerWorkspace">
+                                <!-- Loaded Dynamically -->
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="mb-2">
+                                <div class="form-section-title"><i class="fa-solid fa-layer-group me-1 text-muted"></i> Step 4: Multi-Attribute Variant Array Matrix (`ProductVariants` Mapping Table)</div>
+                                <p class="text-muted small m-0 mt-1">Generate SKU system item nodes by pairing attribute options with targeted pricing overrides.</p>
+                            </div>
+                            <div class="bg-white rounded border shadow-sm p-0 overflow-hidden mt-2">
+                                <div class="table-responsive">
+                                    <table class="table table-sm align-middle text-center mb-0" id="variantGridMatrixTable" style="min-width: 800px;">
+                                        <thead class="table-light text-uppercase" style="font-size:0.68rem; letter-spacing: 0.5px;">
+                                            <tr>
+                                                <th style="width: 12%;">Variant ID</th>
+                                                <th style="width: 22%;">Size Association (`Sizes` FK)</th>
+                                                <th style="width: 22%;">Color Option Tag</th>
+                                                <th style="width: 18%;">Custom Variant Price Override (PKR)</th>
+                                                <th style="width: 16%;">Unique Component SKU</th>
+                                                <th style="width: 10%;">Structural Weight (KG)</th>
+                                                <th style="width: 8%;">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="variantGridBody">
+                                            <!-- Appended Dynamically -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <div class="p-2 bg-light text-start border-top">
+                                    <button class="btn btn-sm btn-outline-primary py-1 px-2 fw-medium" type="button" style="font-size:0.75rem;" onclick="appendBlankVariantRow()"><i class="fa-solid fa-plus-square me-1"></i>Append Multi-Attribute Variant Row Combo</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                            <button class="btn btn-sm btn-light border px-3" type="button" onclick="toggleWorkspaceViewFrame()">Minimize Editor Form</button>
+                            <button class="btn btn-sm btn-success px-4" style="background: var(--panel-bg); border:none;" type="button" onclick="commitWorkspaceChangesToMemory()">Commit Master Records changes</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // MASTER CACHE DATA LOADED FROM API
+        let categories = [];
+        let subcategories = [];
+        let promotions = [];
+        let colors = [];
+        let sizes = [];
+        let productsDatabaseCache = [];
+
+        // Dynamic Maps populated from raw arrays
+        let mappedSubcategories = {};
+        let mappedPromotions = {};
+
+        // Transient Component Data Memory Arrays
+        let localGalleriesState = [];
+        let localVariantsState = [];
+        let variantSequenceIdCounter = 0;
+
+        document.addEventListener("DOMContentLoaded", function() {
+            loadAllData();
+        });
+
+        // Show a premium floating toast notification
+        function showToast(message, type = "success") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = `p-3 rounded shadow flex items-center gap-2 border bg-white pointer-events-auto toast-enter ${
+                type === "success" 
+                    ? "text-success border-success" 
+                    : "text-danger border-danger"
+            }`;
+            toast.style.fontSize = "0.85rem";
+            toast.style.fontWeight = "600";
+            
+            const icon = document.createElement("i");
+            icon.className = type === "success" ? "fa-solid fa-circle-check text-success" : "fa-solid fa-circle-xmark text-danger";
+            
+            const text = document.createElement("span");
+            text.textContent = message;
+
+            toast.appendChild(icon);
+            toast.appendChild(text);
+            container.appendChild(toast);
+
+            // Trigger animation
+            requestAnimationFrame(() => {
+                toast.classList.add("toast-show");
+            });
+
+            // Auto dismiss toast
+            setTimeout(() => {
+                toast.classList.remove("toast-show");
+                toast.style.transform = "translateY(-1rem)";
+                toast.style.opacity = "0";
+                toast.style.transition = "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // LOAD DATA PIPELINES FROM DB
+        async function loadAllData() {
+            try {
+                const [cats, subs, proms, cols, szs, prods] = await Promise.all([
+                    fetch("/Category/List").then(res => res.json()),
+                    fetch("/SubCategory/List").then(res => res.json()),
+                    fetch("/Promotion/List").then(res => res.json()),
+                    fetch("/Color/List").then(res => res.json()),
+                    fetch("/Size/List").then(res => res.json()),
+                    fetch("/Product/List").then(res => res.json())
+                ]);
+
+                categories = cats;
+                subcategories = subs;
+                promotions = proms;
+                colors = cols;
+                sizes = szs;
+                productsDatabaseCache = prods;
+
+                // Group subcategories by category
+                mappedSubcategories = {};
+                subcategories.forEach(sub => {
+                    const catId = sub.categoryId.toString();
+                    if (!mappedSubcategories[catId]) {
+                        mappedSubcategories[catId] = [];
+                    }
+                    mappedSubcategories[catId].push({
+                        id: sub.subCategoryId,
+                        name: sub.subcategoryName,
+                        season: sub.seasonType,
+                        start: sub.startDate ? sub.startDate.split('T')[0] : "N/A",
+                        end: sub.endDate ? sub.endDate.split('T')[0] : "N/A"
+                    });
+                });
+
+                // Group promotions by subcategory
+                mappedPromotions = {};
+                promotions.forEach(promo => {
+                    if (promo.isActive) {
+                        const subId = promo.subCategoryId.toString();
+                        if (!mappedPromotions[subId]) {
+                            mappedPromotions[subId] = [];
+                        }
+                        mappedPromotions[subId].push({
+                            id: promo.promotionId,
+                            name: promo.discountName,
+                            discount: promo.promotionDiscount,
+                            type: promo.discountType,
+                            start: promo.startDate ? promo.startDate.split('T')[0] : "N/A",
+                            end: promo.endDate ? promo.endDate.split('T')[0] : "N/A"
+                        });
+                    }
+                });
+
+                populateCategoryDropdown();
+                populateFactoryColorDropdown();
+                renderMasterLedgerTable();
+            } catch (err) {
+                console.error("Error loading master catalogs:", err);
+                showToast("Error loading catalogs: " + err.message, "danger");
+            }
+        }
+
+        function populateCategoryDropdown() {
+            const dropdown = document.getElementById("inputCategory");
+            dropdown.innerHTML = "";
+            categories.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = c.categoryId;
+                opt.textContent = `${c.categoryName} (ID: CAT-${c.categoryId})`;
+                dropdown.appendChild(opt);
+            });
+            updateSubcategoriesDropdown();
+        }
+
+        function populateFactoryColorDropdown() {
+            const dropdown = document.getElementById("factoryColorDropdown");
+            dropdown.innerHTML = "";
+            colors.forEach(c => {
+                const opt = document.createElement("option");
+                opt.value = `${c.colorName}|${c.hexCode}|${c.colorId}`;
+                opt.textContent = c.colorName;
+                dropdown.appendChild(opt);
+            });
+        }
+
+        // HIERARCHY CASCADING ENGINE
+        function updateSubcategoriesDropdown() {
+            const catId = document.getElementById("inputCategory").value;
+            const subCatSelect = document.getElementById("inputSubCategory");
+            subCatSelect.innerHTML = "";
+
+            if (mappedSubcategories[catId]) {
+                mappedSubcategories[catId].forEach(sub => {
+                    let opt = document.createElement("option");
+                    opt.value = sub.id;
+                    opt.textContent = `${sub.name} (ID: SUBCAT-${sub.id})`;
+                    subCatSelect.appendChild(opt);
+                });
+            }
+            updateSubcategoryDetails();
+        }
+
+       function updateSubcategoryDetails() {
+    const catId = document.getElementById("inputCategory").value;
+    const subId = document.getElementById("inputSubCategory").value;
+    const seasonInput = document.getElementById("inputSeason");
+    const promoSelect = document.getElementById("inputPromotion");
+
+    // Clear previous season value
+    seasonInput.value = "";
+    
+    // 1. FIX: Clear previous options in the promotion dropdown
+    // Keeps a default blank/placeholder option if you have one, or completely empties it
+    promoSelect.innerHTML = '<option value="">Select a Promotion...</option>'; 
+
+    if (mappedSubcategories[catId]) {
+        const subObj = mappedSubcategories[catId].find(s => s.id == subId);
+        if (subObj) {
+            seasonInput.value = `${subObj.season} (${subObj.start} to ${subObj.end})`;
+        }
+    }
+
+    if (mappedPromotions[subId]) {
+        mappedPromotions[subId].forEach(promo => {
+            let opt = document.createElement("option");
+            opt.value = promo.id;
+            opt.textContent = `${promo.name}`;
+            promoSelect.appendChild(opt);
+        });
+    }
+    
+    updatePromotionMetaDataDisplayBox();
+}
+
+        function updatePromotionMetaDataDisplayBox() {
+            const subId = document.getElementById("inputSubCategory").value;
+            const promoId = document.getElementById("inputPromotion").value;
+            const typeInput = document.getElementById("inputPromoType");
+            const horizonInput = document.getElementById("inputPromoTimeline");
+
+            typeInput.value = "";
+            horizonInput.value = "";
+
+            if (promoId && mappedPromotions[subId]) {
+                const matchPromo = mappedPromotions[subId].find(p => p.id == promoId);
+                if (matchPromo) {
+                    typeInput.value = `${matchPromo.type} (${matchPromo.discount})`;
+                    horizonInput.value = `${matchPromo.start} to ${matchPromo.end}`;
+                    return;
+                }
+            }
+            horizonInput.placeholder = "YYYY-MM-DD to YYYY-MM-DD";
+        }
+
+        // VIEW STATE TOGGLE NAVIGATION MAPPING SYSTEM
+        function toggleWorkspaceViewFrame() {
+            const ledgerPane = document.getElementById("ledgerViewPane");
+            const formPane = document.getElementById("formWorkspaceViewPane");
+            const actionBtn = document.getElementById("toggleWorkspaceStateBtn");
+
+            if (ledgerPane.classList.contains("active-pane")) {
+                prepareStudioFormForNewRecord();
+                ledgerPane.classList.remove("active-pane");
+                formPane.classList.add("active-pane");
+                actionBtn.innerHTML = `<i class="fa-solid fa-list me-1"></i> View Operational Ledger`;
+            } else {
+                ledgerPane.classList.add("active-pane");
+                formPane.classList.remove("active-pane");
+                actionBtn.innerHTML = `<i class="fa-solid fa-sliders me-1"></i> Toggle Configuration Workspace Flow`;
+            }
+        }
+
+        // PREPARE FRESH WORKSPACE FOR NEW ENTRY
+        function prepareStudioFormForNewRecord() {
+            document.getElementById("activeProductIdHidden").value = "";
+            document.getElementById("formPanelHeadingMode").innerHTML = `<i class="fa-solid fa-folder-plus me-2 text-primary"></i>Create New Multi-Attribute Product Profile`;
+            
+            document.getElementById("inputBaseName").value = "";
+            document.getElementById("inputDescription").value = "";
+            document.getElementById("inputMasterSKU").value = "";
+            document.getElementById("inputBasePrice").value = "";
+            document.getElementById("inputIsActive").checked = true;
+            
+            if (categories.length > 0) {
+                document.getElementById("inputCategory").value = categories[0].categoryId;
+            }
+
+            updateSubcategoriesDropdown();
+
+            localGalleriesState = [];
+            localVariantsState = [];
+
+            renderWorkspaceGalleriesHTML();
+            renderWorkspaceVariantsHTML();
+        }
+
+        // READ SPECIFIC PROFILE LINE RECORD BACK INTO ACTIVE FORM WORKSPACE VIA ACTION COMMAND
+        function loadExistingProductForEditing(productId) {
+            const product = productsDatabaseCache.find(p => p.id === productId);
+            if (!product) return;
+
+            document.getElementById("activeProductIdHidden").value = product.id;
+            document.getElementById("formPanelHeadingMode").innerHTML = `<i class="fa-solid fa-pen-to-square me-2 text-warning"></i>Modify Profile Matrix: ${product.id}`;
+            
+            document.getElementById("inputBaseName").value = product.baseName;
+            document.getElementById("inputDescription").value = product.description || "";
+            document.getElementById("inputMasterSKU").value = product.masterSKU;
+            document.getElementById("inputBasePrice").value = product.basePrice;
+            document.getElementById("inputCategory").value = product.categoryId;
+            
+            updateSubcategoriesDropdown();
+            
+            document.getElementById("inputSubCategory").value = product.subCategoryId;
+            updateSubcategoryDetails();
+
+            if (product.promotionId) {
+                document.getElementById("inputPromotion").value = product.promotionId;
+                updatePromotionMetaDataDisplayBox();
+            }
+
+            document.getElementById("inputIsActive").checked = product.isActive;
+
+            // Deep clone cached details to avoid mutating global cache directly
+            localGalleriesState = JSON.parse(JSON.stringify(product.galleries));
+            localVariantsState = JSON.parse(JSON.stringify(product.variants));
+
+            renderWorkspaceGalleriesHTML();
+            renderWorkspaceVariantsHTML();
+
+            document.getElementById("ledgerViewPane").classList.remove("active-pane");
+            document.getElementById("formWorkspaceViewPane").classList.add("active-pane");
+            document.getElementById("toggleWorkspaceStateBtn").innerHTML = `<i class="fa-solid fa-list me-1"></i> View Operational Ledger`;
+        }
+
+        // LEDGER MAIN TABLE VIEW GENERATOR SYSTEM
+        function renderMasterLedgerTable(dataSource = productsDatabaseCache) {
+            const tbody = document.getElementById("masterOperationalLedgerBody");
+            tbody.innerHTML = "";
+
+            if (dataSource.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-5 text-center text-muted small"><i class="fa-solid fa-circle-nodes me-2"></i>Operational ledger environment cache is currently empty or no records match search. Toggle configuration form space to build records.</td></tr>`;
+                return;
+            }
+
+            dataSource.forEach(product => {
+                let matrixColumnBreakdownHTML = "";
+
+                product.galleries.forEach(gal => {
+                    const linkedVariants = product.variants.filter(v => v.color === gal.colorName);
+                    let pillsRowHtml = "";
+                    
+                    if (linkedVariants.length === 0) {
+                        pillsRowHtml = `<span class="text-muted small ps-1" style="font-size:0.75rem;">None Linked...</span>`;
+                    } else {
+                        linkedVariants.forEach(v => {
+                            pillsRowHtml += `<span class="variant-tag-pill me-1 mb-1">${v.size} <span class="text-muted ms-1">(PKR ${v.price.toLocaleString()})</span></span>`;
+                        });
+                    }
+
+                    matrixColumnBreakdownHTML += `
+                        <div class="ledger-color-block text-start mb-2">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="badge text-white" style="background-color: ${gal.colorHex} !important; font-size: 0.7rem; padding: 2px 6px;">
+                                    ${gal.colorName}
+                                </span>
+                                <span class="text-secondary fw-medium" style="font-size:0.75rem;">
+                                    <i class="fa-regular fa-image text-muted me-1"></i> ${gal.images.length} Attached
+                                </span>
+                            </div>
+                            <div class="d-flex flex-wrap align-items-center">${pillsRowHtml}</div>
+                        </div>
+                    `;
+                });
+
+                if (product.galleries.length === 0) {
+                    matrixColumnBreakdownHTML = `<span class="text-muted small italic"><i class="fa-solid fa-circle-info me-1"></i> No image media structures linked to variant profiles.</span>`;
+                }
+
+                // Retrieve Category and SubCategory details
+                const catObj = categories.find(c => c.categoryId.toString() === product.categoryId);
+                const catName = catObj ? catObj.categoryName : "Unknown Category";
+                
+                let subCatName = "Unknown Subcategory";
+                if (mappedSubcategories[product.categoryId]) {
+                    const sObj = mappedSubcategories[product.categoryId].find(s => s.id.toString() === product.subCategoryId);
+                    if (sObj) subCatName = sObj.name;
+                }
+
+                let promoBadgeHtml = "";
+                if (product.promotionId && mappedPromotions[product.subCategoryId]) {
+                    const pObj = mappedPromotions[product.subCategoryId].find(p => p.id.toString() === product.promotionId);
+                    if (pObj) {
+                        promoBadgeHtml = `<div class="mt-1"><span class="badge bg-warning text-dark" style="font-size: 0.68rem;"><i class="fa-solid fa-percent me-1"></i>${pObj.name} [${pObj.discount}]</span></div>`;
+                    }
+                }
+
+                const tr = document.createElement("tr");
+                tr.id = `ledger_row_${product.id}`;
+                tr.innerHTML = `
+                    <td class="text-start">
+                        <div class="fw-bold text-dark mb-1" style="font-size: 0.95rem;">${product.baseName}</div>
+                        <div class="text-muted small mb-1" style="font-size: 0.78rem; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${product.description || 'No description recorded'}</div>
+                        <div class="text-muted small mb-1">SKU Reference: <span class="font-monospace text-dark fw-medium">${product.masterSKU}</span></div>
+                        <span class="badge bg-success-subtle text-success border border-success px-2" style="font-size:0.68rem; border-radius:12px;">
+                            ${product.isActive ? 'Live Active' : 'Staged Inactive'}
+                        </span>
+                    </td>
+                    <td class="text-start">
+                        <div class="fw-semibold text-dark mb-1" style="font-size:0.84rem;">${catName}</div>
+                        <div class="text-muted small">Subcat: ${subCatName} ➔ <br><span class="text-primary fw-medium">${product.seasonDisplay}</span></div>
+                        ${promoBadgeHtml}
+                    </td>
+                    <td>
+                        <div class="fw-bold text-dark" style="font-size:0.92rem;">PKR ${product.basePrice.toLocaleString()}</div>
+                    </td>
+                    <td>
+                        <div style="max-height: 240px; overflow-y: auto;">${matrixColumnBreakdownHTML}</div>
+                    </td>
+                    <td class="text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <button class="btn btn-sm btn-outline-primary p-2" type="button" onclick="loadExistingProductForEditing('${product.id}')" title="Modify Record Mapping"><i class="fa-solid fa-pen-to-square"></i></button>
+                            <button class="btn btn-sm btn-outline-danger p-2" type="button" onclick="purgeProductLineItemEntry('${product.id}')" title="Purge Record Line Item"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // STEP 3 DYNAMIC RENDER PIPELINES
+        function renderWorkspaceGalleriesHTML() {
+            const container = document.getElementById("galleryContainerWorkspace");
+            container.innerHTML = "";
+
+            if (localGalleriesState.length === 0) {
+                container.innerHTML = `<div class="col-12"><div class="p-4 text-center border border-dashed rounded text-muted small bg-white"><i class="fa-solid fa-palette me-2"></i>No custom image profile color galleries instantiated. Add one above.</div></div>`;
+                return;
+            }
+
+            localGalleriesState.forEach((gallery, gIdx) => {
+                const cardCol = document.createElement("div");
+                cardCol.className = "col-12 col-xl-6";
+                
+                let rowsHtml = "";
+                gallery.images.forEach((img, iIdx) => {
+                    rowsHtml += `
+                        <div class="media-row">
+                            <div class="media-thumbnail-placeholder ${img.isCover ? 'active-star' : ''}">
+                                <i class="${img.isCover ? 'fa-solid fa-star' : 'fa-regular fa-image'}"></i>
+                            </div>
+                            <input type="text" class="form-control form-control-sm border shadow-none font-monospace" style="font-size:0.8rem;" value="${img.url}" oninput="localGalleriesState[${gIdx}].images[${iIdx}].url = this.value">
+                            <div class="form-check m-0 pt-1 flex-shrink-0">
+                                <input class="form-check-input" type="radio" name="coverRadio_${gallery.id}" ${img.isCover ? 'checked' : ''} id="radio_${gallery.id}_${iIdx}" onchange="setPrimaryGalleryCover(${gIdx}, ${iIdx})">
+                                <label class="form-check-label small text-muted user-select-none" style="cursor:pointer;" for="radio_${gallery.id}_${iIdx}">Cover</label>
+                            </div>
+                            <button class="btn btn-sm text-danger border-0 p-1" type="button" onclick="deleteImageRow(${gIdx}, ${iIdx})"><i class="fa-solid fa-trash-can"></i></button>
+                        </div>
+                    `;
+                });
+
+                cardCol.innerHTML = `
+                    <div class="gallery-card shadow-sm bg-white">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge text-white px-2 py-1 small" style="background-color: ${gallery.colorHex} !important;">
+                                <i class="fa-solid fa-palette me-1"></i> GALLERY: ${gallery.colorName.toUpperCase()}
+                            </span>
+                            <button class="btn btn-xs btn-action py-1 px-2" style="font-size:0.75rem;" type="button" onclick="appendBlankImageRow(${gIdx})">
+                                <i class="fa-solid fa-plus text-primary me-1"></i> Add Image URL Link
+                            </button>
+                        </div>
+                        <div class="media-rows-wrapper">${rowsHtml}</div>
+                        <div class="text-end mt-2">
+                            <button class="btn btn-link btn-sm text-danger text-decoration-none small p-0" style="font-size:0.75rem;" type="button" onclick="deleteEntireGalleryBlock(${gIdx})">
+                                <i class="fa-solid fa-circle-xmark me-1"></i>Remove Gallery Block
+                            </button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(cardCol);
+            });
+        }
+
+        function createNewGalleryBlockFromFactory() {
+            const dropdown = document.getElementById("factoryColorDropdown");
+            if (!dropdown.value) {
+                alert("No color mappings registered in database to initialize gallery box.");
+                return;
+            }
+            const [colorName, colorHex, colorIdStr] = dropdown.value.split("|");
+            const colorId = parseInt(colorIdStr);
+
+            if (localGalleriesState.some(g => g.colorId === colorId)) {
+                alert(`Gallery profile block for ${colorName} is already instantiated inside workspace memory.`);
+                return;
+            }
+
+            localGalleriesState.push({
+                id: "gal_" + colorId,
+                colorId: colorId,
+                colorName: colorName,
+                colorHex: colorHex,
+                images: [{ imageId: 0, url: "https://cdn.elira.com/img/placeholder-media.jpg", isCover: true }]
+            });
+            renderWorkspaceGalleriesHTML();
+        }
+
+        function appendBlankImageRow(gIdx) {
+            localGalleriesState[gIdx].images.push({ imageId: 0, url: "https://cdn.elira.com/img/appended-media.jpg", isCover: false });
+            renderWorkspaceGalleriesHTML();
+        }
+
+        function setPrimaryGalleryCover(gIdx, iIdx) {
+            localGalleriesState[gIdx].images.forEach((img, idx) => { img.isCover = (idx === iIdx); });
+            renderWorkspaceGalleriesHTML();
+        }
+
+        function deleteImageRow(gIdx, iIdx) {
+            const wasCover = localGalleriesState[gIdx].images[iIdx].isCover;
+            localGalleriesState[gIdx].images.splice(iIdx, 1);
+            if (wasCover && localGalleriesState[gIdx].images.length > 0) {
+                localGalleriesState[gIdx].images[0].isCover = true;
+            }
+            renderWorkspaceGalleriesHTML();
+        }
+
+        // REMOVE ENTIRE GALLERY BLOCK
+        function deleteEntireGalleryBlock(gIdx) {
+            localGalleriesState.splice(gIdx, 1);
+            renderWorkspaceGalleriesHTML();
+        }
+
+        // STEP 4 DYNAMIC RENDER MATRIX SYSTEM
+        function renderWorkspaceVariantsHTML() {
+            const tbody = document.getElementById("variantGridBody");
+            tbody.innerHTML = "";
+
+            if (localVariantsState.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-3 text-muted bg-light text-center small"><i class="fa-solid fa-triangle-exclamation me-1"></i>No variant permutations appended inside tracking grids.</td></tr>`;
+                return;
+            }
+
+            localVariantsState.forEach((variant, vIdx) => {
+                const tr = document.createElement("tr");
+
+                let sizeOptionsHtml = sizes.map(s => 
+                    `<option value="${s.sizeId}" ${variant.sizeId === s.sizeId ? 'selected' : ''}>${s.sizeName} (ID: SZ-${s.sizeId})</option>`
+                ).join("");
+                
+                let colorOptionsHtml = colors.map(c => 
+                    `<option value="${c.colorId}" ${variant.colorId === c.colorId ? 'selected' : ''}>${c.colorName}</option>`
+                ).join("");
+
+                const masterSku = document.getElementById('inputMasterSKU').value || 'SKU';
+                const matchedSize = sizes.find(s => s.sizeId === variant.sizeId) || { sizeName: variant.size };
+                const sizeShort = matchedSize.sizeName.length >= 3 ? matchedSize.sizeName.substring(0, 3).toUpperCase() : matchedSize.sizeName.toUpperCase();
+                const variantSKUVal = `${masterSku}-${sizeShort}-${variant.colorId}`;
+
+                tr.innerHTML = `
+                    <td class="text-muted fw-bold small text-center">${variant.variantId && variant.variantId !== 0 ? '#VAR-' + variant.variantId : 'NEW'}</td>
+                    <td>
+                        <select class="form-select form-select-sm py-1 border shadow-none" style="font-size:0.8rem;" onchange="localVariantsState[${vIdx}].sizeId = parseInt(this.value); const matched = sizes.find(s => s.sizeId == this.value); localVariantsState[${vIdx}].size = matched ? matched.sizeName : ''; renderWorkspaceVariantsHTML();">
+                            ${sizeOptionsHtml}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm py-1 border shadow-none" style="font-size:0.8rem;" onchange="localVariantsState[${vIdx}].colorId = parseInt(this.value); const matched = colors.find(c => c.colorId == this.value); localVariantsState[${vIdx}].color = matched ? matched.colorName : '';">
+                            ${colorOptionsHtml}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="number" class="form-control form-control-sm py-1 text-center border shadow-none fw-semibold" style="font-size:0.8rem;" value="${variant.price}" oninput="localVariantsState[${vIdx}].price = parseFloat(this.value) || 0">
+                    </td>
+                    <td>
+                        <input type="text" class="form-control form-control-sm py-1 text-center font-monospace" style="font-size:0.78rem; background-color: #f8fafc;" value="${variantSKUVal}" readonly>
+                    </td>
+                    <td>
+                        <input type="number" step="0.01" class="form-control form-control-sm py-1 text-center border shadow-none" style="font-size:0.8rem;" value="${variant.weight}" oninput="localVariantsState[${vIdx}].weight = parseFloat(this.value) || 0">
+                    </td>
+                    <td class="text-center">
+                        <button class="btn text-danger p-1 border-0" type="button" onclick="deleteVariantRow(${vIdx})"><i class="fa-solid fa-circle-minus" style="font-size:1.1rem;"></i></button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function appendBlankVariantRow() {
+            variantSequenceIdCounter++;
+            const basePriceInput = parseFloat(document.getElementById("inputBasePrice").value) || 0;
+            const defaultSize = sizes.length > 0 ? sizes[0] : { sizeId: 1, sizeName: "Small" };
+            const defaultColor = colors.length > 0 ? colors[0] : { colorId: 1, colorName: "Crimson" };
+            localVariantsState.push({
+                variantId: 0,
+                sizeId: defaultSize.sizeId,
+                size: defaultSize.sizeName,
+                colorId: defaultColor.colorId,
+                color: defaultColor.colorName,
+                price: basePriceInput,
+                weight: 0.40
+            });
+            renderWorkspaceVariantsHTML();
+        }
+
+        function deleteVariantRow(vIdx) {
+            localVariantsState.splice(vIdx, 1);
+            renderWorkspaceVariantsHTML();
+        }
+
+        // SAVE AND COMMIT WORKSPACE MUTATION ROUTINES
+        async function commitWorkspaceChangesToMemory() {
+            const baseName = document.getElementById("inputBaseName").value.trim();
+            const description = document.getElementById("inputDescription").value.trim();
+            const masterSKU = document.getElementById("inputMasterSKU").value.trim();
+            const basePrice = parseFloat(document.getElementById("inputBasePrice").value) || 0;
+
+            if (!baseName || !masterSKU) {
+                alert("Please fill out the Product Title and SKU Profile properties before committing.");
+                return;
+            }
+
+            const targetId = document.getElementById("activeProductIdHidden").value;
+            const subCategoryId = parseInt(document.getElementById("inputSubCategory").value) || 0;
+
+            if (subCategoryId <= 0) {
+                alert("Please select a valid Subcategory mapping.");
+                return;
+            }
+
+            let productId = 0;
+            if (targetId) {
+                if (targetId.startsWith("PROD-")) {
+                    productId = parseInt(targetId.replace("PROD-", "")) || 0;
+                } else {
+                    productId = parseInt(targetId) || 0;
+                }
+            }
+
+            // Construct saving Product payload (no navigation collections)
+            const productPayload = {
+                productId: productId,
+                subCategoryId: subCategoryId,
+                productName: baseName,
+                description: description,
+                basePrice: basePrice,
+                sku: masterSKU,
+                isActive: document.getElementById("inputIsActive").checked
+            };
+
+            const commitBtn = document.querySelector('button[onclick="commitWorkspaceChangesToMemory()"]');
+            commitBtn.disabled = true;
+            commitBtn.textContent = "Committing Changes...";
+
+            try {
+                // 1. Save core Product entity
+                const response = await fetch("/Product/Save", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(productPayload)
+                });
+
+                const result = await response.json();
+                if (!result.success) {
+                    throw new Error(result.message || "Product save failed.");
+                }
+
+                const savedProductId = result.productId;
+
+                // 2. Build variants payload matching ProductVariant domain model
+                const variantsPayload = localVariantsState.map(v => {
+                    const matchedSize = sizes.find(s => s.sizeId === v.sizeId) || { sizeName: v.size };
+                    const sizeShort = matchedSize.sizeName.length >= 3 ? matchedSize.sizeName.substring(0, 3).toUpperCase() : matchedSize.sizeName.toUpperCase();
+                    const sku = `${masterSKU}-${sizeShort}-${v.colorId}`;
+                    return {
+                        variantId: v.variantId || 0,
+                        productId: savedProductId,
+                        sizeId: v.sizeId,
+                        colorId: v.colorId,
+                        variantPrice: v.price,
+                        weight: v.weight,
+                        variantSKU: sku,
+                        isActive: true
+                    };
+                });
+
+                // 3. Build images payload matching ProductImage domain model
+                const imagesPayload = [];
+                localGalleriesState.forEach(gal => {
+                    let displayOrder = 0;
+                    gal.images.forEach(img => {
+                        imagesPayload.push({
+                            imageId: img.imageId || 0,
+                            productId: savedProductId,
+                            colorId: gal.colorId,
+                            imageURL: img.url,
+                            isPrimary: img.isCover,
+                            displayOrder: displayOrder++
+                        });
+                    });
+                });
+
+                // 4. Synchronize variants via ProductVariantController
+                const varResponse = await fetch(`/ProductVariant/Sync?productId=${savedProductId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(variantsPayload)
+                });
+                const varResult = await varResponse.json();
+                if (!varResult.success) {
+                    throw new Error(varResult.message || "Failed to synchronize variants.");
+                }
+
+                // 5. Synchronize images via ProductImageController
+                const imgResponse = await fetch(`/ProductImage/Sync?productId=${savedProductId}`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify(imagesPayload)
+                });
+                const imgResult = await imgResponse.json();
+                if (!imgResult.success) {
+                    throw new Error(imgResult.message || "Failed to synchronize images.");
+                }
+
+                showToast(productId ? "Product updated successfully!" : "Product created successfully!");
+                
+                // Toggle back to ledger and reload list
+                const ledgerPane = document.getElementById("ledgerViewPane");
+                const formPane = document.getElementById("formWorkspaceViewPane");
+                const actionBtn = document.getElementById("toggleWorkspaceStateBtn");
+
+                ledgerPane.classList.add("active-pane");
+                formPane.classList.remove("active-pane");
+                actionBtn.innerHTML = `<i class="fa-solid fa-sliders me-1"></i> Toggle Configuration Workspace Flow`;
+
+                await loadAllData();
+            } catch (err) {
+                console.error("Save error:", err);
+                showToast("Save error: " + err.message, "danger");
+            } finally {
+                commitBtn.disabled = false;
+                commitBtn.textContent = "Commit Master Records changes";
+            }
+        }
+
+        // PURGE product line item entry
+        async function purgeProductLineItemEntry(productId) {
+            if (confirm(`Are you sure you want to purge the master record ${productId}? This action will cascade delete all linked product variants and image mappings.`)) {
+                try {
+                    const response = await fetch(`/Product/DeleteByStringId?id=${productId}`, {
+                        method: "POST"
+                    });
+                    const result = await response.json();
+                    if (result.success) {
+                        showToast("Product record successfully purged.");
+                        await loadAllData();
+                    } else {
+                        showToast(result.message || "Failed to purge record.", "danger");
+                    }
+                } catch (err) {
+                    console.error("Purge error:", err);
+                    showToast("Purge error: " + err.message, "danger");
+                }
+            }
+        }
+
+        // Search filter logic
+        function filterLedgerRows() {
+            const query = document.getElementById("ledgerSearchInput").value.trim().toLowerCase();
+
+            if (!query) {
+                renderMasterLedgerTable();
+                return;
+            }
+
+            const filtered = productsDatabaseCache.filter(p => {
+                const catObj = categories.find(c => c.categoryId.toString() === p.categoryId);
+                const catName = catObj ? catObj.categoryName.toLowerCase() : "";
+
+                let subCatName = "";
+                if (mappedSubcategories[p.categoryId]) {
+                    const sObj = mappedSubcategories[p.categoryId].find(s => s.id.toString() === p.subCategoryId);
+                    if (sObj) subCatName = sObj.name.toLowerCase();
+                }
+
+                let promoText = "";
+                if (p.promotionId && mappedPromotions[p.subCategoryId]) {
+                    const pObj = mappedPromotions[p.subCategoryId].find(pr => pr.id.toString() === p.promotionId);
+                    if (pObj) promoText = `${pObj.name} ${pObj.discount} ${pObj.type}`.toLowerCase();
+                }
+
+                return (
+                    (p.baseName || "").toLowerCase().includes(query) ||
+                    (p.masterSKU || "").toLowerCase().includes(query) ||
+                    catName.includes(query) ||
+                    subCatName.includes(query) ||
+                    promoText.includes(query) ||
+                    (p.seasonDisplay || "").toLowerCase().includes(query)
+                );
+            });
+
+            renderMasterLedgerTable(filtered);
+        }
+    </script>
+</body>
+</html>

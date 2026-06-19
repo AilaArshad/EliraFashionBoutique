@@ -1,6 +1,23 @@
+using Microsoft.EntityFrameworkCore;
+using EliraFashionBoutique.Models;
+using EliraFashionBoutique.Repositories.Interfaces;
+using EliraFashionBoutique.Repositories.Implementations;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddDbContext<EliraDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ISubCategoryRepository, SubCategoryRepository>();
+builder.Services.AddScoped<IPromotionRepository, PromotionRepository>();
+builder.Services.AddScoped<IColorRepository, ColorRepository>();
+builder.Services.AddScoped<ISizeRepository, SizeRepository>();
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<IProductVariantRepository, ProductVariantRepository>();
+builder.Services.AddScoped<IProductImageRepository, ProductImageRepository>();
+
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
@@ -22,8 +39,14 @@ app.MapStaticAssets();
 
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
+    pattern: "{controller=Category}/{action=Index}/{id?}")
     .WithStaticAssets();
 
+
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<EliraDbContext>();
+    context.Database.EnsureCreated();
+}
 
 app.Run();
