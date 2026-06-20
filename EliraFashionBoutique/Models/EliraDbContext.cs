@@ -17,6 +17,10 @@ public class EliraDbContext : DbContext
     public virtual DbSet<Product> Products { get; set; }
     public virtual DbSet<ProductVariant> ProductVariants { get; set; }
     public virtual DbSet<ProductImage> ProductImages { get; set; }
+    public virtual DbSet<Supplier> Suppliers { get; set; }
+    public virtual DbSet<PurchaseOrder> PurchaseOrders { get; set; }
+    public virtual DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
+    public virtual DbSet<Inventory> Inventories { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -127,6 +131,53 @@ public class EliraDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(d => d.ColorId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Supplier>(entity =>
+        {
+            entity.HasKey(e => e.SupplierId);
+            entity.Property(e => e.SupplierName).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Category).IsRequired().HasMaxLength(100);
+        });
+
+        modelBuilder.Entity<PurchaseOrder>(entity =>
+        {
+            entity.HasKey(e => e.PurchaseOrderId);
+            entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(12, 2)");
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+
+            entity.HasOne(d => d.Supplier)
+                .WithMany(p => p.PurchaseOrders)
+                .HasForeignKey(d => d.SupplierId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<PurchaseOrderItem>(entity =>
+        {
+            entity.HasKey(e => e.PurchaseOrderItemId);
+            entity.Property(e => e.Subtotal).HasColumnType("decimal(12, 2)");
+
+            entity.HasOne(d => d.PurchaseOrder)
+                .WithMany(p => p.PurchaseOrderItems)
+                .HasForeignKey(d => d.PurchaseOrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Variant)
+                .WithMany()
+                .HasForeignKey(d => d.VariantId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Inventory>(entity =>
+        {
+            entity.HasKey(e => e.InventoryId);
+            entity.HasIndex(e => e.VariantId).IsUnique();
+
+            entity.HasOne(d => d.Variant)
+                .WithOne()
+                .HasForeignKey<Inventory>(d => d.VariantId)
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }
