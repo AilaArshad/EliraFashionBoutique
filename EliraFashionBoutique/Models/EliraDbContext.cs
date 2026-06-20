@@ -17,7 +17,9 @@ public class EliraDbContext : DbContext
     public virtual DbSet<Product> Products { get; set; }
     public virtual DbSet<ProductVariant> ProductVariants { get; set; }
     public virtual DbSet<ProductImage> ProductImages { get; set; }
-    public virtual DbSet<Supplier> Suppliers { get; set; }
+    public virtual DbSet<User> Users { get; set; }
+    public virtual DbSet<Customer> Customers { get; set;
+   public virtual DbSet<Supplier> Suppliers { get; set; }
     public virtual DbSet<PurchaseOrder> PurchaseOrders { get; set; }
     public virtual DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
     public virtual DbSet<Inventory> Inventories { get; set; }
@@ -131,6 +133,50 @@ public class EliraDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(d => d.ColorId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.UserId);
+            entity.HasIndex(e => e.Email).IsUnique();
+            entity.Property(e => e.RoleName).IsRequired().HasMaxLength(50);
+            entity.Property(e => e.Email).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.Password).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.IsEmailVerified).HasDefaultValue(true);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+        });
+
+        modelBuilder.Entity<Customer>(entity =>
+        {
+            entity.HasKey(e => e.CustomerId);
+            entity.Property(e => e.FullName).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.PhoneNo).HasMaxLength(20);
+            entity.Property(e => e.Address).IsRequired().HasMaxLength(255);
+            entity.Property(e => e.Gender).HasMaxLength(10);
+            entity.Property(e => e.DateOfBirth).HasColumnType("date");
+            entity.Property(e => e.City).HasMaxLength(100);
+            entity.Property(e => e.PostalCode).HasMaxLength(20);
+            entity.Property(e => e.Country).HasMaxLength(100);
+
+            entity.HasOne(d => d.User)
+                .WithOne(p => p.Customer)
+                .HasForeignKey<Customer>(d => d.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Supplier>(entity =>
+        {
+            entity.HasKey(e => e.SupplierId);
+            entity.Property(e => e.SupplierName).IsRequired().HasMaxLength(150);
+            entity.Property(e => e.ContactPerson).HasMaxLength(100);
+            entity.Property(e => e.Phone).HasMaxLength(20);
+            entity.Property(e => e.Address).HasMaxLength(255);
+            entity.Property(e => e.CreatedAt).HasDefaultValueSql("GETDATE()");
+
+            entity.HasOne(d => d.User)
+                .WithOne(p => p.Supplier)
+                .HasForeignKey<Supplier>(d => d.UserId)
+                .OnDelete(DeleteBehavior.SetNull);
         });
 
         modelBuilder.Entity<Supplier>(entity =>
