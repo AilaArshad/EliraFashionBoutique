@@ -25,10 +25,12 @@ public class PurchaseOrdersController : Controller
     public async Task<IActionResult> GetSuppliers()
     {
         var suppliers = await _context.Suppliers
+            .Where(s => s.UserId != null)
             .Select(s => new {
                 id = s.SupplierId,
                 name = s.SupplierName,
-                category = s.Category
+                category = s.Category,
+                hasOrders = s.PurchaseOrders.Any()
             })
             .ToListAsync();
 
@@ -107,6 +109,8 @@ public class PurchaseOrdersController : Controller
                 return BadRequest(new { detail = "Supplier not found." });
             }
 
+            System.Console.WriteLine($"[PURCHASE ORDER LOG] Creating Purchase Order for Supplier {supplier.SupplierName} (SupplierID: {supplier.SupplierId}, Associated UserID: {supplier.UserId})");
+
             // Create Parent Order
             var order = new PurchaseOrder
             {
@@ -166,8 +170,23 @@ public class PurchaseOrdersController : Controller
             }
 
             order.TotalAmount = calculatedTotal;
-            await _context.SaveChangesAsync();
 
+            // Update the supplier's Category to match the Category Name of the purchase order items
+            var firstItemInput = input.Items.FirstOrDefault();
+            if (firstItemInput != null)
+            {
+                var firstVariant = await _context.ProductVariants
+                    .Include(v => v.Product)
+                        .ThenInclude(p => p.SubCategory)
+                            .ThenInclude(sc => sc.Category)
+                    .FirstOrDefaultAsync(v => v.VariantId == firstItemInput.VariantId);
+                if (firstVariant != null && firstVariant.Product != null && firstVariant.Product.SubCategory != null && firstVariant.Product.SubCategory.Category != null)
+                {
+                    supplier.Category = firstVariant.Product.SubCategory.Category.CategoryName;
+                }
+            }
+
+            await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
             return StatusCode(201, new { message = "Order committed successfully!", id = order.PurchaseOrderId });
@@ -200,6 +219,9 @@ public class PurchaseOrdersController : Controller
             {
                 return NotFound(new { detail = "Purchase Order not found." });
             }
+
+            var supplier = await _context.Suppliers.FindAsync(input.SupplierId);
+            System.Console.WriteLine($"[PURCHASE ORDER LOG] Updating Purchase Order #{input.PurchaseOrderId} for Supplier {supplier?.SupplierName} (SupplierID: {input.SupplierId}, Associated UserID: {supplier?.UserId})");
 
             string previousStatus = order.Status;
 
@@ -275,6 +297,21 @@ public class PurchaseOrdersController : Controller
             order.Status = input.Status;
             order.TotalAmount = calculatedTotal;
 
+            // Update the supplier's Category to match the Category Name of the purchase order items
+            var firstItemInput = input.ManifestItems.FirstOrDefault();
+            if (firstItemInput != null && supplier != null)
+            {
+                var firstVariant = await _context.ProductVariants
+                    .Include(v => v.Product)
+                        .ThenInclude(p => p.SubCategory)
+                            .ThenInclude(sc => sc.Category)
+                    .FirstOrDefaultAsync(v => v.VariantId == firstItemInput.VariantId);
+                if (firstVariant != null && firstVariant.Product != null && firstVariant.Product.SubCategory != null && firstVariant.Product.SubCategory.Category != null)
+                {
+                    supplier.Category = firstVariant.Product.SubCategory.Category.CategoryName;
+                }
+            }
+
             await _context.SaveChangesAsync();
             await transaction.CommitAsync();
 
@@ -287,6 +324,60 @@ public class PurchaseOrdersController : Controller
         }
     }
 
+    // GET: /api/categories
+    [HttpGet("api/categories")]
+    public async Task<IActionResult> GetCategories()
+    {
+        if (!await _context.Categories.AnyAsync())
+        {
+            var category1 = new Category { CategoryName = "Linens & Cotton", Description = "Premium linens and cotton fabrics" };
+            var category2 = new Category { CategoryName = "Bridal Wear", Description = "Luxury bridal wear collection" };
+            _context.Categories.AddRange(category1, category2);
+            await _context.SaveChangesAsync();
+
+            var subcat1 = new SubCategory { CategoryId = category1.CategoryId, SubcategoryName = "Linens", SeasonType = "Summer", IsActive = true };
+            var subcat2 = new SubCategory { CategoryId = category1.CategoryId, SubcategoryName = "Cotton", SeasonType = "Summer", IsActive = true };
+            var subcat3 = new SubCategory { CategoryId = category2.CategoryId, SubcategoryName = "Lehengas", SeasonType = "Winter", IsActive = true };
+            _context.SubCategories.AddRange(subcat1, subcat2, subcat3);
+            await _context.SaveChangesAsync();
+
+            var product1 = new Product { SubCategoryId = subcat1.SubCategoryId, ProductName = "Summer Linen Shirt", BasePrice = 1500, SKU = "LNN-SMR-SH-XL", IsActive = true };
+            var product2 = new Product { SubCategoryId = subcat2.SubCategoryId, ProductName = "Cotton Kurta", BasePrice = 1200, SKU = "CTN-KRT-M", IsActive = true };
+            var product3 = new Product { SubCategoryId = subcat3.SubCategoryId, ProductName = "Designer Bridal Lehenga", BasePrice = 85000, SKU = "BDL-LHG-RED", IsActive = true };
+            _context.Products.AddRange(product1, product2, product3);
+            await _context.SaveChangesAsync();
+
+            var variant1 = new ProductVariant { ProductId = product1.ProductId, VariantSKU = "LNN-SMR-SH-XL", VariantPrice = 1500, IsActive = true };
+            var variant2 = new ProductVariant { ProductId = product2.ProductId, VariantSKU = "CTN-KRT-M", VariantPrice = 1200, IsActive = true };
+            var variant3 = new ProductVariant { ProductId = product3.ProductId, VariantSKU = "BDL-LHG-RED", VariantPrice = 85000, IsActive = true };
+            _context.ProductVariants.AddRange(variant1, variant2, variant3);
+            await _context.SaveChangesAsync();
+
+            // Default supplier categories to Linens & Cotton if they are empty
+            var suppliersList = await _context.Suppliers.ToListAsync();
+            if (suppliersList.Any())
+            {
+                foreach (var sup in suppliersList)
+                {
+                    if (string.IsNullOrEmpty(sup.Category))
+                    {
+                        sup.Category = "Linens & Cotton";
+                    }
+                }
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        var categories = await _context.Categories
+            .Select(c => new {
+                id = c.CategoryId,
+                name = c.CategoryName
+            })
+            .ToListAsync();
+
+        return Json(categories);
+    }
+
     // GET: /api/subcategories
     [HttpGet("api/subcategories")]
     public async Task<IActionResult> GetSubCategories()
@@ -294,6 +385,7 @@ public class PurchaseOrdersController : Controller
         var subcategories = await _context.SubCategories
             .Select(sc => new {
                 id = sc.SubCategoryId,
+                categoryId = sc.CategoryId,
                 name = sc.SubcategoryName
             })
             .ToListAsync();

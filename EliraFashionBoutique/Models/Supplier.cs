@@ -30,4 +30,11 @@ public class Supplier
     [ForeignKey("UserId")]
     [JsonIgnore]
     public virtual User? User { get; set; }
+
+    [Required]
+    [StringLength(100)]
+    public string Category { get; set; } = string.Empty;
+
+    [JsonIgnore]
+    public virtual ICollection<PurchaseOrder> PurchaseOrders { get; set; } = new List<PurchaseOrder>();
 }

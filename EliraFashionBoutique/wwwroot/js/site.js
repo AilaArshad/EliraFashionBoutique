@@ -11,6 +11,8 @@
 
 // Client-side API caching to prevent redundant AJAX queries and ensure seamless UI transitions
 const apiCache = {
+    categories: null,
+    suppliers: null,
     subCategories: null,
     products: {},     // Key: subCategoryId
     variants: {},     // Key: productId
@@ -29,9 +31,44 @@ window.addEventListener("DOMContentLoaded", async () => {
         bsCollapse = new bootstrap.Collapse(formElement, { toggle: false });
     }
 
+    // Immediately clear mock data in the supplier dropdown
+    const formSupplierSelect = document.getElementById("formSupplierSelect");
+    if (formSupplierSelect) {
+        formSupplierSelect.innerHTML = "";
+    }
+
+    // Inject "Select Category" dynamically in-place next to Supplier select
+    if (formSupplierSelect) {
+        const supplierDiv = formSupplierSelect.closest(".col-sm-6");
+        const dateDiv = document.getElementById("formDeliveryDate").closest(".col-sm-6");
+        const statusDiv = document.getElementById("formOrderStatus").closest(".col-sm-12");
+
+        if (supplierDiv && dateDiv && statusDiv) {
+            supplierDiv.className = "col-sm-6 col-md-3";
+            dateDiv.className = "col-sm-6 col-md-3";
+            statusDiv.className = "col-sm-12 col-md-3";
+
+            const categoryDiv = document.createElement("div");
+            categoryDiv.className = "col-sm-6 col-md-3";
+            categoryDiv.id = "categoryFilterContainer";
+            categoryDiv.innerHTML = `
+                <label class="form-label small fw-semibold">Select Category</label>
+                <select id="formCategorySelect" class="form-select form-select-sm table-form-input">
+                </select>
+            `;
+            supplierDiv.parentNode.insertBefore(categoryDiv, dateDiv);
+
+            // Add event listener to formCategorySelect
+            const formCategorySelect = document.getElementById("formCategorySelect");
+            formCategorySelect.addEventListener("change", handleTopCategoryChange);
+        }
+    }
+
     // Load Initial Data
     try {
+        await loadCategories();
         await loadSuppliers();
+        await handleTopCategoryChange();
         await syncAssociatedOrdersUI(trackedActiveSupplierId);
     } catch (error) {
         console.error("Initialization error:", error);
@@ -88,14 +125,15 @@ window.addEventListener("DOMContentLoaded", async () => {
  * Loads the active suppliers list from database endpoints.
  */
 async function loadSuppliers() {
-    const response = await fetch("/api/suppliers");
-    if (!response.ok) throw new Error("Failed to fetch suppliers.");
-    const suppliers = await response.json();
+    const suppliers = await fetchSuppliers();
 
     const tbody = document.getElementById("supplierTableBody");
     if (tbody) {
         tbody.innerHTML = "";
-        suppliers.forEach(supplier => {
+        
+        // Filter suppliers to only show those with purchase orders (real-time linking details)
+        const activeSuppliers = suppliers.filter(s => s.hasOrders);
+        activeSuppliers.forEach(supplier => {
             const isActiveClass = supplier.id.toString() === trackedActiveSupplierId.toString() ? "active-row" : "";
             tbody.innerHTML += `
                 <tr data-supplier-id="${supplier.id}" class="${isActiveClass}" style="cursor: pointer;">
@@ -103,17 +141,80 @@ async function loadSuppliers() {
                         <div class="fw-bold text-dark">${supplier.name}</div>
                         <small class="text-muted">ID Reference: ${supplier.id}</small>
                     </td>
-                    <td><span class="badge bg-light text-dark border">${supplier.category}</span></td>
+                    <td><span class="badge bg-light text-dark border">${supplier.category || ""}</span></td>
                 </tr>`;
         });
     }
+}
 
-    // Populate Form Dropdown Select dynamically
+async function fetchCategories() {
+    if (apiCache.categories) return apiCache.categories;
+    const response = await fetch("/api/categories");
+    if (!response.ok) throw new Error("Failed to fetch categories.");
+    const data = await response.json();
+    apiCache.categories = data;
+    return data;
+}
+
+async function fetchSuppliers() {
+    const response = await fetch("/api/suppliers");
+    if (!response.ok) throw new Error("Failed to fetch suppliers.");
+    const data = await response.json();
+    return data;
+}
+
+async function loadCategories() {
+    const categories = await fetchCategories();
+    const formCategorySelect = document.getElementById("formCategorySelect");
+    if (formCategorySelect) {
+        formCategorySelect.innerHTML = categories.map(c => `
+            <option value="${c.id}">${c.name}</option>
+        `).join('');
+    }
+}
+
+async function handleTopCategoryChange() {
+    const categorySelect = document.getElementById("formCategorySelect");
+    if (!categorySelect) return;
+    const selectedCategoryId = parseInt(categorySelect.value);
+
+    // 1. Ensure the "Select Supplier" combobox retains or refetches all active suppliers from the database
+    const allSuppliers = await fetchSuppliers();
     const formSupplierSelect = document.getElementById("formSupplierSelect");
     if (formSupplierSelect) {
-        formSupplierSelect.innerHTML = suppliers.map(s => `
+        const prevValue = formSupplierSelect.value;
+        formSupplierSelect.innerHTML = allSuppliers.map(s => `
             <option value="${s.id}">${s.name}</option>
         `).join('');
+        if (prevValue) {
+            formSupplierSelect.value = prevValue;
+        }
+    }
+
+    // 2. Filter row-level sub-categories of any rows currently in the manifest table
+    const rows = document.querySelectorAll(".manifest-item-row");
+    for (const row of rows) {
+        const subcatSelect = row.querySelector(".subcat-select");
+        const subcategories = await fetchSubCategories();
+        const filteredSubCats = subcategories.filter(sc => sc.categoryId === selectedCategoryId);
+
+        subcatSelect.innerHTML = filteredSubCats.map(sc => `<option value="${sc.id}">${sc.name}</option>`).join('');
+
+        const rowId = parseInt(row.id.replace("variantRow_", ""));
+        await handleSubCatChange(rowId);
+    }
+}
+
+async function syncSuppliersForCategory(supplierIdToSelect) {
+    const allSuppliers = await fetchSuppliers();
+    const formSupplierSelect = document.getElementById("formSupplierSelect");
+    if (formSupplierSelect) {
+        formSupplierSelect.innerHTML = allSuppliers.map(s => `
+            <option value="${s.id}">${s.name}</option>
+        `).join('');
+        if (supplierIdToSelect) {
+            formSupplierSelect.value = supplierIdToSelect;
+        }
     }
 }
 
@@ -207,13 +308,31 @@ async function populateOrderToForm(supplierId, orderId) {
     document.getElementById("editingOrderId").value = orderId;
     document.getElementById("savePurchaseOrderBtn").innerText = "Update Existing Order";
 
-    // Set Metadata values
-    document.getElementById("formSupplierSelect").value = supplierId;
-
     // Fetch order details
     const response = await fetch(`/api/orders/${orderId}`);
     if (!response.ok) throw new Error("Failed to fetch order details.");
     const targetOrder = await response.json();
+
+    // Dynamically identify and set the category belonging to this order's items
+    if (targetOrder.items && targetOrder.items.length > 0) {
+        const firstItem = targetOrder.items[0];
+        const targetVariant = await fetchVariantDetails(firstItem.variantId);
+        const responseProd = await fetch(`/api/products/${targetVariant.productId}`);
+        if (responseProd.ok) {
+            const targetProduct = await responseProd.json();
+            const subcategories = await fetchSubCategories();
+            const subcat = subcategories.find(sc => sc.id === targetProduct.subCategoryId);
+            if (subcat && subcat.categoryId) {
+                const categorySelect = document.getElementById("formCategorySelect");
+                if (categorySelect) {
+                    categorySelect.value = subcat.categoryId;
+                }
+            }
+        }
+    }
+
+    // Sync supplier dropdown based on the identified category, and select the order's supplier
+    await syncSuppliersForCategory(supplierId);
 
     document.getElementById("formDeliveryDate").value = targetOrder.expectedDeliveryDate;
     document.getElementById("formOrderStatus").value = targetOrder.status;
@@ -247,8 +366,16 @@ function resetFormState() {
 
     evaluatePlaceholderState();
 
-    if (bsCollapse) {
-        bsCollapse.hide();
+    // Reset Category dropdown selection and refresh suppliers list matching first category
+    const categorySelect = document.getElementById("formCategorySelect");
+    if (categorySelect) {
+        categorySelect.selectedIndex = 0;
+        handleTopCategoryChange();
+    }
+
+    const formElement = document.getElementById('newOrderCollapseForm');
+    if (formElement) {
+        bootstrap.Collapse.getOrCreateInstance(formElement).hide();
     }
 }
 
@@ -268,7 +395,9 @@ async function handleAppendRowClick() {
     if (placeholder) placeholder.remove();
 
     const subcategories = await fetchSubCategories();
-    const subCatOptions = subcategories.map(sc => `<option value="${sc.id}">${sc.name}</option>`).join('');
+    const selectedCategoryId = parseInt(document.getElementById("formCategorySelect").value);
+    const filteredSubcategories = subcategories.filter(sc => sc.categoryId === selectedCategoryId);
+    const subCatOptions = filteredSubcategories.map(sc => `<option value="${sc.id}">${sc.name}</option>`).join('');
 
     const rowHtml = `
         <tr id="variantRow_${rowCounter}" class="manifest-item-row">
@@ -302,7 +431,9 @@ async function appendVariantRowWithData(id, orderItem) {
 
     const targetSubCatId = targetProduct.subCategoryId;
     const subcategories = await fetchSubCategories();
-    const subCatOptions = subcategories.map(sc => `<option value="${sc.id}" ${sc.id === targetSubCatId ? 'selected' : ''}>${sc.name}</option>`).join('');
+    const selectedCategoryId = parseInt(document.getElementById("formCategorySelect").value);
+    const filteredSubcategories = subcategories.filter(sc => sc.categoryId === selectedCategoryId);
+    const subCatOptions = filteredSubcategories.map(sc => `<option value="${sc.id}" ${sc.id === targetSubCatId ? 'selected' : ''}>${sc.name}</option>`).join('');
 
     const rowHtml = `
         <tr id="variantRow_${id}" class="manifest-item-row">
@@ -550,6 +681,13 @@ async function submitPurchaseOrderForm() {
 
         alert("Purchase order transaction saved successfully!");
         resetFormState();
+
+        // Clear client-side cache so fresh lists are loaded in real-time
+        apiCache.suppliers = null;
+        apiCache.categories = null;
+
+        await loadSuppliers();
+        await handleTopCategoryChange();
         await syncAssociatedOrdersUI(chosenSupplier);
 
     } catch (error) {
@@ -608,3 +746,4 @@ window.populateOrderToForm = populateOrderToForm;
 window.evaluatePlaceholderState = evaluatePlaceholderState;
 window.resetFormState = resetFormState;
 window.syncAssociatedOrdersUI = syncAssociatedOrdersUI;
+window.handleTopCategoryChange = handleTopCategoryChange;

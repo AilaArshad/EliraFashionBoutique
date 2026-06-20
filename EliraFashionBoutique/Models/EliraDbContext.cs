@@ -18,8 +18,8 @@ public class EliraDbContext : DbContext
     public virtual DbSet<ProductVariant> ProductVariants { get; set; }
     public virtual DbSet<ProductImage> ProductImages { get; set; }
     public virtual DbSet<User> Users { get; set; }
-    public virtual DbSet<Customer> Customers { get; set;
-   public virtual DbSet<Supplier> Suppliers { get; set; }
+    public virtual DbSet<Customer> Customers { get; set; }
+    public virtual DbSet<Supplier> Suppliers { get; set; }
     public virtual DbSet<PurchaseOrder> PurchaseOrders { get; set; }
     public virtual DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
     public virtual DbSet<Inventory> Inventories { get; set; }
