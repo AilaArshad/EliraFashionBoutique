@@ -1,50 +1,225 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - EliraFashionBoutique</title>
-    <script type="importmap"></script>
+    <title>@ViewData["Title"] - Elira Fashion Boutique</title>
+
+    <!-- Core Libraries -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Global Design System -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/EliraFashionBoutique.styles.css" asp-append-version="true" />
+
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container-fluid">
-                <a class="navbar-brand" asp-area="" asp-controller="Home" asp-action="Index">EliraFashionBoutique</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="navbar-collapse collapse d-sm-inline-flex justify-content-between">
-                    <ul class="navbar-nav flex-grow-1">
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Index">Home</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link text-dark" asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-                        </li>
-                    </ul>
-                </div>
+
+    <!-- ═══════════════════════════════════════════════════
+         COLLAPSIBLE LEFT SIDEBAR
+    ══════════════════════════════════════════════════════ -->
+    <nav id="elira-sidebar">
+
+        <!-- Brand Header -->
+        <div class="sidebar-brand">
+            <div class="sidebar-brand-logo-container">
+                <img src="~/images/logo.png" alt="Elira Logo" class="sidebar-brand-logo" />
             </div>
-        </nav>
-    </header>
-    <div class="container">
-        <main role="main" class="pb-3">
+        </div>
+
+        <!-- Navigation -->
+        <ul class="sidebar-nav">
+            <li class="sidebar-nav-item">
+                <a href="/"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+                   data-tooltip="System Dashboard">
+                    <i class="fa-solid fa-gauge nav-icon"></i>
+                    <span class="nav-label">System Dashboard</span>
+                </a>
+            </li>
+
+            <li class="sidebar-nav-item">
+                <a href="/Product/Index"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "active" : "")"
+                   data-tooltip="Product Catalog">
+                    <i class="fa-solid fa-tags nav-icon"></i>
+                    <span class="nav-label">Product Catalog</span>
+                </a>
+            </li>
+
+            <li class="sidebar-nav-item">
+                <a href="/Category/Index"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "active" : "")"
+                   data-tooltip="Category Catalog">
+                    <i class="fa-solid fa-boxes-stacked nav-icon"></i>
+                    <span class="nav-label">Category Catalog</span>
+                </a>
+            </li>
+
+            <li class="sidebar-nav-item">
+                <a href="#"
+                   class="sidebar-nav-link"
+                   data-tooltip="Customer Orders">
+                    <i class="fa-solid fa-cart-shopping nav-icon"></i>
+                    <span class="nav-label">Customer Orders</span>
+                </a>
+            </li>
+
+            <li class="sidebar-nav-item">
+                <a href="/"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PurchaseOrders" ? "active" : "")"
+                   data-tooltip="Supplier Order Catalog">
+                    <i class="fa-solid fa-truck nav-icon"></i>
+                    <span class="nav-label">Supplier Orders</span>
+                </a>
+            </li>
+
+            <li class="sidebar-nav-item">
+                <a href="#"
+                   class="sidebar-nav-link"
+                   data-tooltip="Returns & Refunds">
+                    <i class="fa-solid fa-rotate-left nav-icon"></i>
+                    <span class="nav-label">Returns & Refunds</span>
+                </a>
+            </li>
+
+            <li class="sidebar-nav-item">
+                <a href="/Users/Index"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")"
+                   data-tooltip="User Management">
+                    <i class="fa-solid fa-user-gear nav-icon"></i>
+                    <span class="nav-label">User Management</span>
+                </a>
+            </li>
+        </ul>
+
+        <!-- Collapse Toggle -->
+        <button class="sidebar-toggle-btn" id="sidebarToggleBtn" title="Toggle Sidebar">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+    </nav>
+
+    <!-- ═══════════════════════════════════════════════════
+         MAIN CONTENT WRAPPER
+    ══════════════════════════════════════════════════════ -->
+    <div id="main-content-wrapper">
+        <main class="page-content fade-in-up">
             @RenderBody()
         </main>
+
+        <footer class="site-footer">
+            <div class="container-fluid text-center">
+                <span>&copy; @DateTime.Now.Year Elira Fashion Boutique. All rights reserved.</span>
+            </div>
+        </footer>
     </div>
 
-    <footer class="border-top footer text-muted">
-        <div class="container">
-            &copy; 2026 - EliraFashionBoutique - <a asp-area="" asp-controller="Home" asp-action="Privacy">Privacy</a>
-        </div>
-    </footer>
+    <!-- ═══════════════════════════════════════════════════
+         GLOBAL TOAST NOTIFICATION CONTAINER
+    ══════════════════════════════════════════════════════ -->
+    <div id="elira-toast-container"></div>
+
+    <!-- ═══════════════════════════════════════════════════
+         CORE SCRIPTS
+    ══════════════════════════════════════════════════════ -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    <script>
+        // ─── SIDEBAR COLLAPSE LOGIC ───────────────────────────────────────────
+        (function () {
+            const sidebar   = document.getElementById('elira-sidebar');
+            const wrapper   = document.getElementById('main-content-wrapper');
+            const toggleBtn = document.getElementById('sidebarToggleBtn');
+
+            // Restore persisted state
+            const isCollapsed = localStorage.getItem('elira_sidebar_collapsed') === 'true';
+            if (isCollapsed) {
+                sidebar.classList.add('collapsed');
+                wrapper.classList.add('sidebar-collapsed');
+            }
+
+            toggleBtn.addEventListener('click', function () {
+                const nowCollapsed = sidebar.classList.toggle('collapsed');
+                wrapper.classList.toggle('sidebar-collapsed', nowCollapsed);
+                localStorage.setItem('elira_sidebar_collapsed', nowCollapsed);
+            });
+        })();
+
+        // ─── GLOBAL TOAST NOTIFICATION SYSTEM ────────────────────────────────
+        /**
+         * Shows a branded toast notification.
+         * @@param {string} message   - Text to display.
+         * @@param {'success'|'error'|'warning'|'info'} type - Style variant.
+         * @@param {number} duration  - Auto-dismiss ms (default 3500).
+         */
+        function showToast(message, type = 'success', duration = 3500) {
+            const container = document.getElementById('elira-toast-container');
+            if (!container) return;
+
+            const icons = {
+                success: 'fa-circle-check',
+                error:   'fa-circle-xmark',
+                warning: 'fa-triangle-exclamation',
+                info:    'fa-circle-info'
+            };
+
+            const toast = document.createElement('div');
+            toast.className = `elira-toast toast-${type}`;
+            toast.innerHTML = `
+                <i class="fa-solid ${icons[type] || icons.info} toast-icon"></i>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+            `;
+
+            container.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => toast.classList.add('show'));
+            });
+
+            // Close button
+            toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
+
+            // Auto-dismiss
+            const timer = setTimeout(() => dismissToast(toast), duration);
+            toast._timer = timer;
+        }
+
+        function dismissToast(toast) {
+            clearTimeout(toast._timer);
+            toast.classList.remove('show');
+            toast.classList.add('hide');
+            toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+        }
+
+        // ─── RENDER TEMPDATA FEEDBACK AS TOASTS ──────────────────────────────
+        (function () {
+            @if (TempData["Success"] != null)
+            {
+                <text>showToast('@Html.Raw(TempData["Success"]?.ToString()?.Replace("'", "\\'"))', 'success');</text>
+            }
+            @if (TempData["Error"] != null)
+            {
+                <text>showToast('@Html.Raw(TempData["Error"]?.ToString()?.Replace("'", "\\'"))', 'error');</text>
+            }
+            @if (TempData["Warning"] != null)
+            {
+                <text>showToast('@Html.Raw(TempData["Warning"]?.ToString()?.Replace("'", "\\'"))', 'warning');</text>
+            }
+        })();
+
+        // Expose globally for views
+        window.showToast = showToast;
+    </script>
+
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
