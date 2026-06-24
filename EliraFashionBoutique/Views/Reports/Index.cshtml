@@ -1,0 +1,787 @@
+﻿@{
+    ViewData["Title"] = "Reports";
+    // No need to set Layout explicitly -- _Layout.cshtml is already
+    // your default layout (set in _ViewStart.cshtml), so this view
+    // automatically renders inside your sidebar + header wrapper.
+}
+
+@section Styles {
+    <style>
+        /* ===== Reports Module — matches ELIRA navy ERP theme ===== */
+        .reports-page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 24px;
+        }
+
+        .reports-page-header h1 {
+            font-family: 'Georgia', serif;
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1f36;
+            margin-bottom: 4px;
+        }
+
+        .reports-page-header p {
+            color: #6b7280;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        /* Tab navigation */
+        .report-tabs {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 24px;
+            background: #ffffff;
+            border-radius: 10px 10px 0 0;
+            padding: 6px 6px 0 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+
+        .report-tab-btn {
+            border: none;
+            background: transparent;
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #6b7280;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            transition: all 0.18s ease;
+            position: relative;
+        }
+
+        .report-tab-btn:hover {
+            background: #f3f4f6;
+            color: #1a1f36;
+        }
+
+        .report-tab-btn.active {
+            color: #0f1c4d;
+            background: #f8f9fc;
+            font-weight: 600;
+        }
+
+        .report-tab-btn.active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -1px;
+            height: 3px;
+            background: #0f1c4d;
+            border-radius: 3px 3px 0 0;
+        }
+
+        /* Card container, same radius/shadow language as Purchase Order cards */
+        .report-card {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+            border: 1px solid #eef0f4;
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        .report-card-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #1a1f36;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .report-card-title .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #0f1c4d;
+            display: inline-block;
+        }
+
+        /* Filters row */
+        .report-filters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            align-items: flex-end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 160px;
+        }
+
+        .filter-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            border: 1px solid #e0e3e9;
+            border-radius: 8px;
+            padding: 9px 12px;
+            font-size: 14px;
+            color: #1a1f36;
+            background: #fbfbfd;
+            min-width: 170px;
+        }
+
+        .filter-group input:focus,
+        .filter-group select:focus {
+            outline: none;
+            border-color: #0f1c4d;
+            background: #fff;
+        }
+
+        .filter-search {
+            flex: 1;
+            min-width: 220px;
+        }
+
+        .filter-actions {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        /* Buttons — matching "Create New Purchase Order" navy button + outline style */
+        .btn-elira-primary {
+            background: #0f1c4d;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.18s ease;
+        }
+
+        .btn-elira-primary:hover { background: #182863; }
+
+        .btn-elira-outline {
+            background: #fff;
+            color: #0f1c4d;
+            border: 1px solid #0f1c4d;
+            border-radius: 8px;
+            padding: 9px 16px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.18s ease;
+        }
+
+        .btn-elira-outline:hover { background: #0f1c4d; color: #fff; }
+
+        .btn-export-pdf { color: #b42318; border-color: #b42318; }
+        .btn-export-pdf:hover { background: #b42318; color: #fff; }
+
+        .btn-export-excel { color: #166534; border-color: #166534; }
+        .btn-export-excel:hover { background: #166534; color: #fff; }
+
+        /* Table styling — consistent with ERP card table look */
+        .report-table-wrapper {
+            overflow-x: auto;
+            margin-top: 20px;
+            border-radius: 10px;
+            border: 1px solid #eef0f4;
+        }
+
+        table.report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13.5px;
+        }
+
+        table.report-table thead th {
+            background: #f8f9fc;
+            color: #6b7280;
+            text-transform: uppercase;
+            font-size: 11.5px;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eef0f4;
+            white-space: nowrap;
+        }
+
+        table.report-table tbody td {
+            padding: 13px 16px;
+            color: #1a1f36;
+            border-bottom: 1px solid #f3f4f6;
+            white-space: nowrap;
+        }
+
+        table.report-table tbody tr:hover { background: #fafbfc; }
+        table.report-table tbody tr:last-child td { border-bottom: none; }
+
+        .status-pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .status-pending  { background: #fef3c7; color: #92400e; }
+        .status-delivered { background: #d1fae5; color: #065f46; }
+        .status-approved { background: #dbeafe; color: #1e40af; }
+
+        .report-empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #9ca3af;
+        }
+
+        .report-empty-state .empty-icon {
+            font-size: 34px;
+            margin-bottom: 10px;
+        }
+
+        .report-tab-panel { display: none; }
+        .report-tab-panel.active { display: block; }
+
+        .report-loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+}
+
+<div class="reports-page-header">
+    <div>
+        <h1>Reports</h1>
+        <p>Generate, filter, and export operational reports across the boutique.</p>
+    </div>
+</div>
+
+<!-- ===== Tab navigation ===== -->
+<div class="report-tabs" id="reportTabs">
+    <button class="report-tab-btn active" data-tab="sales">Sales Report</button>
+    <button class="report-tab-btn" data-tab="customer">Customer Report</button>
+    <button class="report-tab-btn" data-tab="product">Product Report</button>
+    <button class="report-tab-btn" data-tab="inventory">Inventory Report</button>
+    <button class="report-tab-btn" data-tab="purchase">Purchase Report</button>
+</div>
+
+<!-- ===================== SALES REPORT TAB ===================== -->
+<div class="report-tab-panel active" id="panel-sales">
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Report Filters</div>
+        <div class="report-filters">
+            <div class="filter-group">
+                <label>Start Date</label>
+                <input type="date" id="sales-startDate" />
+            </div>
+            <div class="filter-group">
+                <label>End Date</label>
+                <input type="date" id="sales-endDate" />
+            </div>
+            <div class="filter-group">
+                <label>Category</label>
+                <select id="sales-categoryId">
+                    <option value="">All Categories</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Status</label>
+                <select id="sales-status">
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Delivered">Delivered</option>
+                    <option value="Cancelled">Cancelled</option>
+                </select>
+            </div>
+            <div class="filter-group filter-search">
+                <label>Search</label>
+                <input type="text" id="sales-search" placeholder="Search by customer, product, order ID..." />
+            </div>
+            <div class="filter-actions">
+                <button class="btn-elira-primary" onclick="ReportsModule.load('sales')">Apply Filters</button>
+                <button class="btn-elira-outline btn-export-pdf" onclick="ReportsModule.exportReport('sales','pdf')">Export PDF</button>
+                <button class="btn-elira-outline btn-export-excel" onclick="ReportsModule.exportReport('sales','excel')">Export Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Sales Data</div>
+        <div class="report-table-wrapper">
+            <table class="report-table" id="sales-table">
+                <thead>
+                    <tr>
+                        <th>Order ID</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Customer</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>Discount</th>
+                        <th>Final Amount</th>
+                    </tr>
+                </thead>
+                <tbody><!-- populated by JS / API --></tbody>
+            </table>
+            <div class="report-empty-state" id="sales-empty">
+                <div class="empty-icon">📊</div>
+                Select filters and click "Apply Filters" to load sales data.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== CUSTOMER REPORT TAB ===================== -->
+<div class="report-tab-panel" id="panel-customer">
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Report Filters</div>
+        <div class="report-filters">
+            <div class="filter-group">
+                <label>Customer ID</label>
+                <input type="number" id="customer-customerId" placeholder="Optional" />
+            </div>
+            <div class="filter-group">
+                <label>Start Date</label>
+                <input type="date" id="customer-startDate" />
+            </div>
+            <div class="filter-group">
+                <label>End Date</label>
+                <input type="date" id="customer-endDate" />
+            </div>
+            <div class="filter-group filter-search">
+                <label>Search</label>
+                <input type="text" id="customer-search" placeholder="Search by customer name or email..." />
+            </div>
+            <div class="filter-actions">
+                <button class="btn-elira-primary" onclick="ReportsModule.load('customer')">Apply Filters</button>
+                <button class="btn-elira-outline btn-export-pdf" onclick="ReportsModule.exportReport('customer','pdf')">Export PDF</button>
+                <button class="btn-elira-outline btn-export-excel" onclick="ReportsModule.exportReport('customer','excel')">Export Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Customer Order History</div>
+        <div class="report-table-wrapper">
+            <table class="report-table" id="customer-table">
+                <thead>
+                    <tr>
+                        <th>Customer ID</th>
+                        <th>Full Name</th>
+                        <th>Email</th>
+                        <th>Phone</th>
+                        <th>Total Orders</th>
+                        <th>Total Spent</th>
+                        <th>Last Order Date</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="report-empty-state" id="customer-empty">
+                <div class="empty-icon">👥</div>
+                Select filters and click "Apply Filters" to load customer data.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== PRODUCT REPORT TAB ===================== -->
+<div class="report-tab-panel" id="panel-product">
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Report Filters</div>
+        <div class="report-filters">
+            <div class="filter-group">
+                <label>Start Date</label>
+                <input type="date" id="product-startDate" />
+            </div>
+            <div class="filter-group">
+                <label>End Date</label>
+                <input type="date" id="product-endDate" />
+            </div>
+            <div class="filter-group filter-search">
+                <label>Search</label>
+                <input type="text" id="product-search" placeholder="Search by product name..." />
+            </div>
+            <div class="filter-actions">
+                <button class="btn-elira-primary" onclick="ReportsModule.load('product')">Apply Filters</button>
+                <button class="btn-elira-outline btn-export-pdf" onclick="ReportsModule.exportReport('product','pdf')">Export PDF</button>
+                <button class="btn-elira-outline btn-export-excel" onclick="ReportsModule.exportReport('product','excel')">Export Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Product Performance</div>
+        <div class="report-table-wrapper">
+            <table class="report-table" id="product-table">
+                <thead>
+                    <tr>
+                        <th>Product ID</th>
+                        <th>Product Name</th>
+                        <th>Subcategory</th>
+                        <th>Units Sold</th>
+                        <th>Total Revenue</th>
+                        <th># Orders</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="report-empty-state" id="product-empty">
+                <div class="empty-icon">🛍️</div>
+                Select filters and click "Apply Filters" to load product performance data.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== INVENTORY (LOW STOCK) REPORT TAB ===================== -->
+<div class="report-tab-panel" id="panel-inventory">
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Report Filters</div>
+        <div class="report-filters">
+            <div class="filter-group">
+                <label>Subcategory</label>
+                <select id="inventory-subCategoryId">
+                    <option value="">All Subcategories</option>
+                </select>
+            </div>
+            <div class="filter-group filter-search">
+                <label>Search</label>
+                <input type="text" id="inventory-search" placeholder="Search by SKU or product name..." />
+            </div>
+            <div class="filter-actions">
+                <button class="btn-elira-primary" onclick="ReportsModule.load('inventory')">Apply Filters</button>
+                <button class="btn-elira-outline btn-export-pdf" onclick="ReportsModule.exportReport('inventory','pdf')">Export PDF</button>
+                <button class="btn-elira-outline btn-export-excel" onclick="ReportsModule.exportReport('inventory','excel')">Export Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Low Stock / Reorder Alerts</div>
+        <div class="report-table-wrapper">
+            <table class="report-table" id="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Product Name</th>
+                        <th>Variant SKU</th>
+                        <th>Size</th>
+                        <th>Color</th>
+                        <th>Available</th>
+                        <th>Reorder Level</th>
+                        <th>Units Needed</th>
+                        <th>Subcategory</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="report-empty-state" id="inventory-empty">
+                <div class="empty-icon">📦</div>
+                Select filters and click "Apply Filters" to load inventory data.
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===================== PURCHASE (RETURNS & REFUNDS) REPORT TAB ===================== -->
+<div class="report-tab-panel" id="panel-purchase">
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Report Filters</div>
+        <div class="report-filters">
+            <div class="filter-group">
+                <label>Start Date</label>
+                <input type="date" id="purchase-startDate" />
+            </div>
+            <div class="filter-group">
+                <label>End Date</label>
+                <input type="date" id="purchase-endDate" />
+            </div>
+            <div class="filter-group">
+                <label>Return Status</label>
+                <select id="purchase-returnStatus">
+                    <option value="">All Statuses</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
+                    <option value="Rejected">Rejected</option>
+                </select>
+            </div>
+            <div class="filter-group filter-search">
+                <label>Search</label>
+                <input type="text" id="purchase-search" placeholder="Search by SKU, order ID..." />
+            </div>
+            <div class="filter-actions">
+                <button class="btn-elira-primary" onclick="ReportsModule.load('purchase')">Apply Filters</button>
+                <button class="btn-elira-outline btn-export-pdf" onclick="ReportsModule.exportReport('purchase','pdf')">Export PDF</button>
+                <button class="btn-elira-outline btn-export-excel" onclick="ReportsModule.exportReport('purchase','excel')">Export Excel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="report-card">
+        <div class="report-card-title"><span class="dot"></span> Returns & Refunds</div>
+        <div class="report-table-wrapper">
+            <table class="report-table" id="purchase-table">
+                <thead>
+                    <tr>
+                        <th>Return ID</th>
+                        <th>Order ID</th>
+                        <th>Return Date</th>
+                        <th>Status</th>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Qty Returned</th>
+                        <th>Refund Amount</th>
+                        <th>Refund Status</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <div class="report-empty-state" id="purchase-empty">
+                <div class="empty-icon">↩️</div>
+                Select filters and click "Apply Filters" to load returns &amp; refunds data.
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // ============================================================
+        // ReportsModule — handles tab switching + API integration
+        // Base API URL: change this to match your Web API's actual port
+        // ============================================================
+        const ReportsModule = (function () {
+            const API_BASE = "https://localhost:7027/api/Reports"; // <-- update port if different
+
+            // Maps each tab key to its API endpoint + table renderer
+            const config = {
+                sales: {
+                    endpoint: "/sales",
+                    filters: ["startDate", "endDate", "categoryId", "status"],
+                    render: renderSalesRows
+                },
+                customer: {
+                    endpoint: "/customer-history",
+                    filters: ["customerId", "startDate", "endDate"],
+                    render: renderCustomerRows
+                },
+                product: {
+                    endpoint: "/product-performance",
+                    filters: ["startDate", "endDate"],
+                    render: renderProductRows
+                },
+                inventory: {
+                    endpoint: "/low-stock",
+                    filters: ["subCategoryId"],
+                    render: renderInventoryRows
+                },
+                purchase: {
+                    endpoint: "/returns",
+                    filters: ["startDate", "endDate", "returnStatus"],
+                    render: renderPurchaseRows
+                }
+            };
+
+            function initTabs() {
+                document.querySelectorAll(".report-tab-btn").forEach(btn => {
+                    btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+                });
+            }
+
+            function switchTab(tabKey) {
+                document.querySelectorAll(".report-tab-btn").forEach(b => b.classList.remove("active"));
+                document.querySelectorAll(".report-tab-panel").forEach(p => p.classList.remove("active"));
+
+                document.querySelector(`.report-tab-btn[data-tab="${tabKey}"]`).classList.add("active");
+                document.getElementById(`panel-${tabKey}`).classList.add("active");
+            }
+
+            // Builds query string from filter inputs that have a value
+            function buildQuery(tabKey) {
+                const cfg = config[tabKey];
+                const params = new URLSearchParams();
+                cfg.filters.forEach(f => {
+                    const el = document.getElementById(`${tabKey}-${f}`);
+                    if (el && el.value) {
+                        // Capitalize first letter to match C# filter property names (StartDate, EndDate, etc.)
+                        const paramName = f.charAt(0).toUpperCase() + f.slice(1);
+                        params.append(paramName, el.value);
+                    }
+                });
+                return params.toString();
+            }
+
+            // Calls the real API endpoint and renders results
+            async function load(tabKey) {
+                const cfg = config[tabKey];
+                const tbody = document.querySelector(`#${tabKey}-table tbody`);
+                const emptyState = document.getElementById(`${tabKey}-empty`);
+
+                tbody.innerHTML = `<tr><td colspan="10" class="report-loading">Loading ${tabKey} report...</td></tr>`;
+                emptyState.style.display = "none";
+
+                try {
+                    const query = buildQuery(tabKey);
+                    const url = `${API_BASE}${cfg.endpoint}${query ? "?" + query : ""}`;
+
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error(`API returned ${response.status}`);
+
+                    const data = await response.json();
+
+                    tbody.innerHTML = "";
+                    if (!data || data.length === 0) {
+                        emptyState.style.display = "block";
+                        emptyState.querySelector(":not(.empty-icon)") || null;
+                        emptyState.innerHTML = `<div class="empty-icon">📭</div> No records found for the selected filters.`;
+                        return;
+                    }
+
+                    cfg.render(data, tbody);
+                } catch (err) {
+                    console.error(`Error loading ${tabKey} report:`, err);
+                    tbody.innerHTML = `<tr><td colspan="10" class="report-loading">Failed to load report. Please check API connection.</td></tr>`;
+                }
+            }
+
+            // ---- Renderers: map JSON response -> table rows ----
+            function renderSalesRows(data, tbody) {
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${row.orderId}</td>
+                            <td>${formatDate(row.orderDate)}</td>
+                            <td>${statusPill(row.status)}</td>
+                            <td>${row.customerName ?? "-"}</td>
+                            <td>${row.productName ?? "-"}</td>
+                            <td>${row.categoryName ?? "-"}</td>
+                            <td>${row.quantity}</td>
+                            <td>${formatCurrency(row.unitPrice)}</td>
+                            <td>${formatCurrency(row.discountedAmount)}</td>
+                            <td>${formatCurrency(row.finalAmount)}</td>
+                        </tr>`;
+                });
+            }
+
+            function renderCustomerRows(data, tbody) {
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${row.customerId}</td>
+                            <td>${row.fullName ?? "-"}</td>
+                            <td>${row.email ?? "-"}</td>
+                            <td>${row.phoneNo ?? "-"}</td>
+                            <td>${row.totalOrders}</td>
+                            <td>${formatCurrency(row.totalSpent)}</td>
+                            <td>${row.lastOrderDate ? formatDate(row.lastOrderDate) : "-"}</td>
+                        </tr>`;
+                });
+            }
+
+            function renderProductRows(data, tbody) {
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${row.productId}</td>
+                            <td>${row.productName ?? "-"}</td>
+                            <td>${row.subcategoryName ?? "-"}</td>
+                            <td>${row.totalUnitsSold}</td>
+                            <td>${formatCurrency(row.totalRevenue)}</td>
+                            <td>${row.numberOfOrders}</td>
+                        </tr>`;
+                });
+            }
+
+            function renderInventoryRows(data, tbody) {
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${row.productName ?? "-"}</td>
+                            <td>${row.variantSKU ?? "-"}</td>
+                            <td>${row.sizeName ?? "-"}</td>
+                            <td>${row.colorName ?? "-"}</td>
+                            <td>${row.quantityAvailable}</td>
+                            <td>${row.reorderLevel}</td>
+                            <td><strong>${row.unitsNeeded}</strong></td>
+                            <td>${row.subcategoryName ?? "-"}</td>
+                        </tr>`;
+                });
+            }
+
+            function renderPurchaseRows(data, tbody) {
+                data.forEach(row => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>#${row.returnId}</td>
+                            <td>#${row.orderId}</td>
+                            <td>${formatDate(row.returnDate)}</td>
+                            <td>${statusPill(row.returnStatus)}</td>
+                            <td>${row.productName ?? "-"}</td>
+                            <td>${row.variantSKU ?? "-"}</td>
+                            <td>${row.quantityReturned}</td>
+                            <td>${row.refundAmount ? formatCurrency(row.refundAmount) : "-"}</td>
+                            <td>${row.refundStatus ?? "-"}</td>
+                        </tr>`;
+                });
+            }
+
+            // ---- Helpers ----
+            function formatDate(value) {
+                const d = new Date(value);
+                return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+            }
+
+            function formatCurrency(value) {
+                if (value === null || value === undefined) return "-";
+                return "PKR " + Number(value).toLocaleString();
+            }
+
+            function statusPill(status) {
+                const cls = (status || "").toLowerCase();
+                let pillClass = "status-pending";
+                if (cls.includes("delivered") || cls.includes("approved") || cls.includes("processed")) pillClass = "status-delivered";
+                else if (cls.includes("pending")) pillClass = "status-pending";
+                return `<span class="status-pill ${pillClass}">${status ?? "-"}</span>`;
+            }
+
+            // ---- Export placeholders (wire to your real export endpoints) ----
+            function exportReport(tabKey, type) {
+                const cfg = config[tabKey];
+                const query = buildQuery(tabKey);
+                const url = `${API_BASE}${cfg.endpoint}/export/${type}${query ? "?" + query : ""}`;
+                // Opens the export endpoint directly -- browser will download the file
+                window.open(url, "_blank");
+            }
+
+            return { initTabs, load, exportReport };
+        })();
+
+        document.addEventListener("DOMContentLoaded", () => {
+            ReportsModule.initTabs();
+            // Optionally auto-load the Sales tab on page load:
+            // ReportsModule.load('sales');
+        });
+    </script>
+}
