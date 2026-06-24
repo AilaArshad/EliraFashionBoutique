@@ -1,276 +1,66 @@
 @{
-    Layout = null;
+    ViewData["Title"] = "User Management";
+    Layout = "_Layout";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Management - EliraFashionBoutique</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            color: #212529;
-        }
 
-        /* ─── PAGE CONTAINER AND HEADERS ─── */
-        .page-container {
-            padding: 2.5rem 3.5rem;
-            max-width: 1600px;
-            margin: 0 auto;
-        }
-        h2.page-title {
-            color: #0f172a;
-            font-size: 2.25rem;
-            font-weight: 700;
-            letter-spacing: -0.025em;
-        }
-        .page-subtitle {
-            color: #64748b;
-            font-size: 1.05rem;
-            font-weight: 400;
-        }
+@section Styles {
+<style>
+    .badge-role-admin    { background-color: #dc3545 !important; color:#fff; }
+    .badge-role-customer { background-color: var(--elira-navy) !important; color:#fff; }
+    .badge-role-supplier { background-color: #16a34a !important; color:#fff; }
+    .badge-role { font-size:0.72rem; font-weight:600; padding: 3px 10px; border-radius:4px; }
 
-        /* ─── BUTTONS ─── */
-        .btn-add-user {
-            background-color: #1e293b;
-            color: #ffffff;
-            border: none;
-            padding: 0.6rem 1.25rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            border-radius: 6px;
-            display: inline-flex;
-            align-items: center;
-            transition: background-color 0.15s ease;
-        }
-        .btn-add-user:hover {
-            background-color: #0f172a;
-            color: #ffffff;
-        }
-        .btn-save-user {
-            background-color: #1e293b;
-            color: #ffffff;
-            font-weight: 500;
-            border-radius: 6px;
-            padding: 0.5rem 1.25rem;
-        }
-        .btn-save-user:hover {
-            background-color: #0f172a;
-            color: #ffffff;
-        }
+    .verified-icon   { color: var(--success); font-size:1.05rem; }
+    .unverified-icon { color: var(--danger);  font-size:1.05rem; }
 
-        /* ─── CARD AND TABLE ─── */
-        .custom-card {
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
-            background-color: #ffffff;
-            overflow: hidden;
-            margin-top: 2rem;
-        }
-        .table {
-            margin-bottom: 0;
-        }
-        .table thead th {
-            background-color: #f8fafc;
-            color: #64748b;
-            font-size: 0.8rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .table tbody td {
-            padding: 1.25rem 1.5rem;
-            color: #334155;
-            font-size: 0.95rem;
-            border-bottom: 1px solid #f1f5f9;
-        }
-        .table tbody tr:last-child td {
-            border-bottom: none;
-        }
+    .btn-action-edit   { border:1px solid var(--border-color); color: var(--text-muted); background:#fff; }
+    .btn-action-edit:hover { background: var(--body-bg); color: var(--text-dark); }
+    .btn-action-delete { border:1px solid var(--danger-border); color: var(--danger); background:#fff; }
+    .btn-action-delete:hover { background: var(--danger-bg); color: #b91c1c; }
 
-        /* ─── BADGES AND ICONS ─── */
-        .badge-admin {
-            background-color: #dc3545 !important;
-            color: #ffffff;
-            font-weight: 500;
-            padding: 0.4em 0.75em;
-            font-size: 0.8rem;
-            border-radius: 4px;
-        }
-        .badge-customer {
-            background-color: #0f172a !important;
-            color: #ffffff;
-            font-weight: 500;
-            padding: 0.4em 0.75em;
-            font-size: 0.8rem;
-            border-radius: 4px;
-        }
-        .badge-supplier {
-            background-color: #198754 !important;
-            color: #ffffff;
-            font-weight: 500;
-            padding: 0.4em 0.75em;
-            font-size: 0.8rem;
-            border-radius: 4px;
-        }
-        .verified-icon {
-            color: #198754;
-            font-size: 1.15rem;
-        }
-        .unverified-icon {
-            color: #dc3545;
-            font-size: 1.15rem;
-        }
-        
-        /* Action buttons layout matching screenshot */
-        .action-btn-group .btn {
-            border-radius: 4px;
-            padding: 0.25rem 0.5rem;
-            font-size: 1.05rem;
-            line-height: 1;
-        }
-        .btn-action-edit {
-            border: 1px solid #cbd5e1;
-            color: #64748b;
-            background-color: #ffffff;
-        }
-        .btn-action-edit:hover {
-            background-color: #f8fafc;
-            color: #334155;
-        }
-        .btn-action-delete {
-            border: 1px solid #fca5a5;
-            color: #ef4444;
-            background-color: #ffffff;
-        }
-        .btn-action-delete:hover {
-            background-color: #fef2f2;
-            color: #b91c1c;
-        }
+    .offcanvas-header .offcanvas-title { font-weight:700; color: var(--text-dark); font-size:1.1rem; }
 
-        /* ─── OFFCANVAS MODAL DESIGN ─── */
-        .offcanvas-header .offcanvas-title {
-            font-weight: 600;
-            color: #0f172a;
-            font-size: 1.25rem;
-        }
-        .form-label {
-            font-weight: 500;
-            color: #334155;
-            font-size: 0.95rem;
-        }
-        .form-control, .form-select {
-            border: 1px solid #cbd5e1;
-            padding: 0.5rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            color: #1e293b;
-        }
-        .form-control::placeholder {
-            color: #94a3b8;
-        }
-        .form-control:focus, .form-select:focus {
-            border-color: #94a3b8;
-            box-shadow: none;
-        }
+    #roleGroup .btn { font-weight:500; font-size:0.9rem; }
+    #roleGroup .btn-check:checked + .btn-outline-danger  { background-color:#dc3545!important; border-color:#dc3545!important; color:#fff!important; }
+    #roleGroup .btn-check:checked + .btn-outline-primary { background-color: var(--elira-navy)!important; border-color: var(--elira-navy)!important; color:#fff!important; }
+    #roleGroup .btn-check:checked + .btn-outline-success { background-color:#16a34a!important; border-color:#16a34a!important; color:#fff!important; }
 
-        /* Custom toggle radio setup */
-        #roleGroup .btn {
-            font-weight: 500;
-            font-size: 0.95rem;
-            padding: 0.45rem 1rem;
-        }
-        #roleGroup .btn-outline-danger {
-            border-color: #cbd5e1;
-            color: #334155;
-        }
-        #roleGroup .btn-check:checked + .btn-outline-danger {
-            background-color: #dc3545 !important;
-            border-color: #dc3545 !important;
-            color: #ffffff !important;
-        }
-        #roleGroup .btn-outline-primary {
-            border-color: #cbd5e1;
-            color: #334155;
-        }
-        #roleGroup .btn-check:checked + .btn-outline-primary {
-            background-color: #0f172a !important;
-            border-color: #0f172a !important;
-            color: #ffffff !important;
-        }
-        #roleGroup .btn-outline-success {
-            border-color: #cbd5e1;
-            color: #334155;
-        }
-        #roleGroup .btn-check:checked + .btn-outline-success {
-            background-color: #198754 !important;
-            border-color: #198754 !important;
-            color: #ffffff !important;
-        }
+    .alert-caution { background: var(--warning-bg); border:1px solid var(--warning-border); color: #92400e; border-radius:8px; padding:1rem; font-size:0.85rem; }
+</style>
+}
 
-        /* Caution Notice Box */
-        .alert-caution {
-            background-color: #fffbeb;
-            border: 1px solid #fef3c7;
-            color: #92400e;
-            border-radius: 6px;
-            padding: 1rem;
-        }
-    </style>
-</head>
-<body>
-
-<div class="page-container">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h2 class="page-title mb-1">User Management</h2>
-            <p class="page-subtitle mb-0">Manage Admins, Customers, and Suppliers</p>
-        </div>
-        <div>
-            <a class="btn btn-outline-secondary btn-sm py-2 px-3 me-2" href="/Product/Index" style="border-radius:6px; font-weight:500; font-size: 0.95rem;">
-                <i class="bi bi-box me-1"></i> Product Studio
-            </a>
-            <a class="btn btn-outline-secondary btn-sm py-2 px-3 me-2" href="/Category/Index" style="border-radius:6px; font-weight:500; font-size: 0.95rem;">
-                <i class="bi bi-folder me-1"></i> Category Terminal
-            </a>
-            <button class="btn btn-add-user" id="btnAddUser">
-                <i class="bi bi-plus-lg me-2"></i>Add User
-            </button>
-        </div>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">User Management</h1>
+        <p class="page-subtitle">Manage Admin, Customer, and Supplier accounts.</p>
     </div>
+    <button class="btn btn-elira-dark" id="btnAddUser">
+        <i class="fa-solid fa-user-plus me-2"></i>Add User
+    </button>
+</div>
 
-    <div id="alertArea" class="mt-3"></div>
-
-    <div class="custom-card">
-        <div class="table-responsive">
-            <table class="table align-middle" id="usersTable">
-                <thead>
-                    <tr>
-                        <th style="width: 8%;">ID</th>
-                        <th style="width: 12%;">Role</th>
-                        <th style="width: 20%;">Name / Company</th>
-                        <th style="width: 22%;">Email</th>
-                        <th style="width: 13%;">Phone</th>
-                        <th style="width: 10%;">Verified</th>
-                        <th style="width: 15%;">Created</th>
-                        <th style="width: 10%;" class="text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="userTableBody">
-                </tbody>
-            </table>
-        </div>
+<div class="content-card fade-in-up">
+    <div class="table-responsive">
+        <table class="table align-middle m-0 elira-table" id="usersTable">
+            <thead>
+                <tr>
+                    <th style="width:7%">ID</th>
+                    <th style="width:11%">Role</th>
+                    <th style="width:20%">Name / Company</th>
+                    <th style="width:22%">Email</th>
+                    <th style="width:13%">Phone</th>
+                    <th style="width:9%">Verified</th>
+                    <th style="width:13%">Created</th>
+                    <th style="width:10%" class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="userTableBody"></tbody>
+        </table>
     </div>
 </div>
 
-<div class="offcanvas offcanvas-end" tabindex="-1" id="userOffcanvas" style="width:480px">
+<!-- ── ADD / EDIT OFFCANVAS ── -->
+<div class="offcanvas offcanvas-end" tabindex="-1" id="userOffcanvas" style="width:490px;">
     <div class="offcanvas-header border-bottom py-3">
         <h5 class="offcanvas-title" id="offcanvasTitle">Add New User</h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas"></button>
@@ -280,8 +70,8 @@
         <div id="roleSelectWrapper" class="mb-4">
             <label class="form-label mb-2">Account Type</label>
             <div class="btn-group w-100" role="group" id="roleGroup">
-                <input type="radio" class="btn-check" name="roleSelect" id="roleAdmin" value="Admin" autocomplete="off" checked>
-                <label class="btn btn-outline-danger" for="roleAdmin">Admin</label>
+                <input type="radio" class="btn-check" name="roleSelect" id="roleAdmin"    value="Admin"    autocomplete="off" checked>
+                <label class="btn btn-outline-danger"  for="roleAdmin">Admin</label>
 
                 <input type="radio" class="btn-check" name="roleSelect" id="roleCustomer" value="Customer" autocomplete="off">
                 <label class="btn btn-outline-primary" for="roleCustomer">Customer</label>
@@ -304,9 +94,7 @@
             <label class="form-label" id="passwordLabel">Password <span class="text-danger">*</span></label>
             <div class="input-group">
                 <input type="password" class="form-control" id="fPassword" placeholder="Min 6 characters" />
-                <button class="btn btn-outline-secondary" style="border-color: #cbd5e1; color: #64748b;" type="button" id="togglePassword">
-                    <i class="bi bi-eye"></i>
-                </button>
+                <button class="btn btn-outline-secondary" type="button" id="togglePassword"><i class="bi bi-eye"></i></button>
             </div>
             <div class="form-text text-muted small" id="passwordHint"></div>
             <div class="invalid-feedback" id="fPasswordErr"></div>
@@ -314,47 +102,45 @@
 
         <div class="mb-4 form-check">
             <input type="checkbox" class="form-check-input" id="fIsEmailVerified" checked>
-            <label class="form-check-label text-dark" for="fIsEmailVerified" style="font-size: 0.95rem;">Email Verified</label>
+            <label class="form-check-label" for="fIsEmailVerified">Email Verified</label>
         </div>
 
+        <!-- Customer fields -->
         <div id="customerFields" style="display:none">
-            <hr><p class="fw-semibold text-primary small text-uppercase mb-3" style="color: #0f172a !important; letter-spacing: 0.05em;">Customer Details</p>
+            <hr><p class="fw-semibold small text-uppercase mb-3" style="color: var(--elira-navy); letter-spacing:.05em;">Customer Details</p>
 
             <div class="mb-3">
                 <label class="form-label">Full Name <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="fFullName" placeholder="John Doe" />
                 <div class="invalid-feedback" id="fFullNameErr"></div>
             </div>
-
             <div class="row g-3 mb-3">
                 <div class="col-6">
                     <label class="form-label">Phone</label>
                     <input type="text" class="form-control" id="fPhoneNo" placeholder="+92 300 0000000" />
+                    <div class="invalid-feedback" id="fPhoneNoErr"></div>
                 </div>
                 <div class="col-6">
                     <label class="form-label">Gender</label>
                     <select class="form-select" id="fGender">
                         <option value="">Select</option>
-                        <option value="Male">Male</option>
-                        <option value="Female">Female</option>
-                        <option value="Other">Other</option>
+                        <option>Male</option>
+                        <option>Female</option>
+                        <option>Other</option>
                     </select>
                 </div>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Date of Birth</label>
                 <input type="date" class="form-control" id="fDob" />
+                <div class="invalid-feedback" id="fDobErr"></div>
             </div>
-
-            <hr><p class="fw-semibold text-primary small text-uppercase mb-3" style="color: #0f172a !important;letter-spacing: 0.05em;">Address</p>
-
+            <hr><p class="fw-semibold small text-uppercase mb-3" style="color: var(--elira-navy); letter-spacing:.05em;">Address</p>
             <div class="mb-3">
                 <label class="form-label">Address Line <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="fAddressLine" placeholder="Street, Building, etc." />
                 <div class="invalid-feedback" id="fAddressLineErr"></div>
             </div>
-
             <div class="row g-3 mb-3">
                 <div class="col-6">
                     <label class="form-label">City</label>
@@ -363,99 +149,86 @@
                 <div class="col-6">
                     <label class="form-label">Postal Code</label>
                     <input type="text" class="form-control" id="fPostalCode" placeholder="54000" />
+                    <div class="invalid-feedback" id="fPostalCodeErr"></div>
                 </div>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Country</label>
                 <input type="text" class="form-control" id="fCountry" placeholder="Pakistan" />
             </div>
         </div>
 
+        <!-- Supplier fields -->
         <div id="supplierFields" style="display:none">
-            <hr><p class="fw-semibold text-success small text-uppercase mb-3" style="letter-spacing: 0.05em;">Supplier Details</p>
-
+            <hr><p class="fw-semibold small text-uppercase mb-3" style="color: var(--success); letter-spacing:.05em;">Supplier Details</p>
             <div class="mb-3">
                 <label class="form-label">Supplier Name <span class="text-danger">*</span></label>
                 <input type="text" class="form-control" id="fSupplierName" placeholder="ABC Textiles Ltd" />
                 <div class="invalid-feedback" id="fSupplierNameErr"></div>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Contact Person</label>
                 <input type="text" class="form-control" id="fContactPerson" placeholder="Ali Khan" />
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Phone</label>
                 <input type="text" class="form-control" id="fSupplierPhone" placeholder="+92 300 0000000" />
+                <div class="invalid-feedback" id="fSupplierPhoneErr"></div>
             </div>
-
             <div class="mb-3">
                 <label class="form-label">Address</label>
                 <textarea class="form-control" id="fSupplierAddress" rows="3" placeholder="Full address..."></textarea>
             </div>
         </div>
 
+        <!-- Admin fields -->
         <div id="adminFields">
-            <hr><p class="fw-semibold text-danger small text-uppercase mb-3" style="color: #dc3545 !important; letter-spacing: 0.05em;">Admin Account</p>
-            <div class="alert-caution small d-flex align-items-start">
-                <i class="bi bi-shield-lock me-2 mt-0.5" style="font-size: 1.1rem; line-height: 1;"></i>
-                <div>
-                    Admin accounts have full system access. <br>Create with caution.
-                </div>
+            <hr><p class="fw-semibold text-danger small text-uppercase mb-3" style="letter-spacing:.05em;">Admin Account</p>
+            <div class="alert-caution d-flex align-items-start gap-2">
+                <i class="bi bi-shield-lock" style="font-size:1.1rem; flex-shrink:0;"></i>
+                <div>Admin accounts have full system access.<br>Create with caution.</div>
             </div>
         </div>
-
     </div>
 
     <div class="offcanvas-footer border-top p-3 d-flex justify-content-between align-items-center">
-        <button class="btn btn-outline-secondary" style="border-radius:6px; font-weight:500;" data-bs-dismiss="offcanvas">Cancel</button>
-        <button class="btn btn-save-user" id="btnSaveUser">Save User</button>
+        <button class="btn btn-outline-secondary" data-bs-dismiss="offcanvas">Cancel</button>
+        <button class="btn btn-elira-dark" id="btnSaveUser">
+            <i class="fa-solid fa-floppy-disk me-1"></i> Save User
+        </button>
     </div>
 </div>
 
+<!-- ── DELETE CONFIRM MODAL ── -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog modal-sm modal-dialog-centered">
-        <div class="modal-content" style="border-radius: 8px; border: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);">
+        <div class="modal-content">
             <div class="modal-header py-3">
-                <h5 class="modal-title" style="font-weight:600; font-size:1.15rem;">Delete User</h5>
+                <h5 class="modal-title fw-bold">Delete User</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body py-3">
-                <p class="mb-2">Are you sure you want to delete <strong id="deleteUserName"></strong>?</p>
+            <div class="modal-body">
+                <p class="mb-1">Are you sure you want to delete <strong id="deleteUserName"></strong>?</p>
                 <p class="text-danger small mb-0"><i class="bi bi-exclamation-triangle me-1"></i>This action cannot be undone.</p>
             </div>
             <div class="modal-footer border-0 pt-0">
-                <button class="btn btn-outline-secondary btn-sm px-3" style="border-radius:6px;" data-bs-dismiss="modal">Cancel</button>
-                <button class="btn btn-danger btn-sm px-3" style="border-radius:6px;" id="btnConfirmDelete">Delete</button>
+                <button class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger btn-sm px-3" id="btnConfirmDelete">Delete</button>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-
+@section Scripts {
 <script>
     let usersList = [];
     let deleteTargetId = null;
-    const bsOffcanvas = new bootstrap.Offcanvas(document.getElementById('userOffcanvas'));
+    const bsOffcanvas  = new bootstrap.Offcanvas(document.getElementById('userOffcanvas'));
     const bsDeleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
 
-    document.addEventListener("DOMContentLoaded", () => {
-        loadUsers();
-    });
+    document.addEventListener('DOMContentLoaded', () => { loadUsers(); });
 
-    function showAlert(type, message) {
-        const alertArea = document.getElementById('alertArea');
-        alertArea.innerHTML = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        `;
-    }
-
+    // ── Data loading ──────────────────────────────────────────
     async function loadUsers() {
         try {
             const response = await fetch('/Users/GetUsers');
@@ -463,7 +236,7 @@
             renderTable();
         } catch (error) {
             console.error('Error loading users:', error);
-            showAlert('danger', 'Failed to load users from the server.');
+            showToast('Failed to load users from the server.', 'error');
         }
     }
 
@@ -471,254 +244,363 @@
         const tbody = document.getElementById('userTableBody');
         tbody.innerHTML = '';
 
+        if (usersList.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="8" class="text-center text-muted py-5 small">
+                <i class="fa-solid fa-users-slash me-2"></i>No users found.</td></tr>`;
+            return;
+        }
+
         usersList.forEach(u => {
-            let roleBadge = u.roleName === 'Admin' ? 'badge-admin' : u.roleName === 'Customer' ? 'badge-customer' : 'badge-supplier';
-            
-            let displayName = '—';
-            if(u.roleName === 'Customer') displayName = u.fullName || '—';
-            else if(u.roleName === 'Supplier') displayName = u.supplierName || '—';
+            const roleClass = u.roleName === 'Admin' ? 'badge-role-admin'
+                           : u.roleName === 'Customer' ? 'badge-role-customer' : 'badge-role-supplier';
 
-            let displayPhone = '—';
-            if(u.roleName === 'Customer') displayPhone = u.phoneNo || '—';
-            else if(u.roleName === 'Supplier') displayPhone = u.supplierPhone || '—';
+            const displayName  = u.roleName === 'Customer' ? (u.fullName     || '—')
+                               : u.roleName === 'Supplier' ? (u.supplierName || '—') : '—';
+            const displayPhone = u.roleName === 'Customer' ? (u.phoneNo      || '—')
+                               : u.roleName === 'Supplier' ? (u.supplierPhone|| '—') : '—';
 
-            let verifiedIcon = u.isEmailVerified 
-                ? '<i class="bi bi-check-circle-fill verified-icon"></i>' 
+            const verifiedIcon = u.isEmailVerified
+                ? '<i class="bi bi-check-circle-fill verified-icon"></i>'
                 : '<i class="bi bi-x-circle-fill unverified-icon"></i>';
 
-            let dateFormatted = new Date(u.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+            const dateFormatted = new Date(u.createdAt).toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
 
-            let tr = document.createElement('tr');
+            const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="text-muted">#${u.userId}</td>
-                <td><span class="badge ${roleBadge}">${u.roleName}</span></td>
-                <td>${displayName}</td>
+                <td><span class="badge badge-role ${roleClass}">${u.roleName}</span></td>
+                <td class="fw-medium">${displayName}</td>
                 <td>${u.email}</td>
                 <td class="text-muted">${displayPhone}</td>
                 <td>${verifiedIcon}</td>
-                <td>${dateFormatted}</td>
+                <td class="text-muted small">${dateFormatted}</td>
                 <td>
-                    <div class="action-btn-group d-flex justify-content-center">
-                        <button class="btn btn-sm btn-action-edit me-2" onclick="editUser(${u.userId})" title="Edit">
+                    <div class="d-flex justify-content-center gap-1">
+                        <button class="btn btn-sm btn-action-edit btn-action rounded" onclick="editUser(${u.userId})" title="Edit">
                             <i class="bi bi-pencil"></i>
                         </button>
-                        <button class="btn btn-sm btn-action-delete" onclick="prepDelete(${u.userId})" title="Delete">
+                        <button class="btn btn-sm btn-action-delete btn-action rounded" onclick="prepDelete(${u.userId})" title="Delete">
                             <i class="bi bi-trash"></i>
                         </button>
                     </div>
-                </td>
-            `;
+                </td>`;
             tbody.appendChild(tr);
         });
     }
 
+    // ── Role switch ───────────────────────────────────────────
     function handleRoleSwitch(role) {
         document.getElementById('customerFields').style.display = role === 'Customer' ? 'block' : 'none';
         document.getElementById('supplierFields').style.display = role === 'Supplier' ? 'block' : 'none';
-        document.getElementById('adminFields').style.display = role === 'Admin' ? 'block' : 'none';
+        document.getElementById('adminFields').style.display    = role === 'Admin'    ? 'block' : 'none';
     }
 
-    document.querySelectorAll('input[name="roleSelect"]').forEach(radio => {
-        radio.addEventListener('change', (e) => handleRoleSwitch(e.target.value));
-    });
+    document.querySelectorAll('input[name="roleSelect"]').forEach(r =>
+        r.addEventListener('change', e => handleRoleSwitch(e.target.value)));
 
-    document.getElementById('togglePassword').addEventListener('click', function() {
+    document.getElementById('togglePassword').addEventListener('click', function () {
         const input = document.getElementById('fPassword');
-        const icon = this.querySelector('i');
-        if (input.type === 'password') {
-            input.type = 'text';
-            icon.className = 'bi bi-eye-slash';
-        } else {
-            input.type = 'password';
-            icon.className = 'bi bi-eye';
-        }
+        const icon  = this.querySelector('i');
+        const visible = input.type === 'text';
+        input.type = visible ? 'password' : 'text';
+        icon.className = visible ? 'bi bi-eye' : 'bi bi-eye-slash';
     });
 
+    // ── Form helpers ──────────────────────────────────────────
     function resetForm() {
-        document.getElementById('editUserId').value = "0";
-        document.getElementById('editMode').value = "create";
-        document.getElementById('fEmail').value = "";
-        document.getElementById('fPassword').value = "";
-        document.getElementById('passwordLabel').innerHTML = 'Password <span class="text-danger">*</span>';
-        document.getElementById('passwordHint').innerText = "";
+        const formInputIds = new Array(
+            'editUserId','fEmail','fPassword','fFullName','fPhoneNo','fGender','fDob',
+            'fAddressLine','fCity','fPostalCode','fCountry',
+            'fSupplierName','fContactPerson','fSupplierPhone','fSupplierAddress'
+        );
+        formInputIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = '';
+        });
+        document.getElementById('editUserId').value       = '0';
+        document.getElementById('editMode').value         = 'create';
         document.getElementById('fIsEmailVerified').checked = true;
+        document.getElementById('passwordLabel').innerHTML  = 'Password <span class="text-danger">*</span>';
+        document.getElementById('passwordHint').innerText   = '';
         
-        document.getElementById('fFullName').value = "";
-        document.getElementById('fPhoneNo').value = "";
-        document.getElementById('fGender').value = "";
-        document.getElementById('fDob').value = "";
-        document.getElementById('fAddressLine').value = "";
-        document.getElementById('fCity').value = "";
-        document.getElementById('fPostalCode').value = "";
-        document.getElementById('fCountry').value = "";
-
-        document.getElementById('fSupplierName').value = "";
-        document.getElementById('fContactPerson').value = "";
-        document.getElementById('fSupplierPhone').value = "";
-        document.getElementById('fSupplierAddress').value = "";
-
         document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        
+        const feedbackIds = new Array(
+            'fEmailErr', 'fPasswordErr', 'fFullNameErr', 'fAddressLineErr',
+            'fPhoneNoErr', 'fDobErr', 'fPostalCodeErr',
+            'fSupplierNameErr', 'fSupplierPhoneErr'
+        );
+        feedbackIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = '';
+        });
     }
 
     document.getElementById('btnAddUser').addEventListener('click', () => {
         resetForm();
-        document.getElementById('offcanvasTitle').innerText = "Add New User";
+        document.getElementById('offcanvasTitle').innerText = 'Add New User';
         document.getElementById('roleSelectWrapper').classList.remove('d-none');
         document.getElementById('roleAdmin').checked = true;
         handleRoleSwitch('Admin');
         bsOffcanvas.show();
     });
 
-    window.editUser = function(id) {
+    window.editUser = function (id) {
         resetForm();
         const user = usersList.find(u => u.userId === id);
-        if(!user) return;
+        if (!user) return;
 
-        document.getElementById('offcanvasTitle').innerText = "Edit User";
-        document.getElementById('editUserId').value = user.userId;
-        document.getElementById('editMode').value = "edit";
+        document.getElementById('offcanvasTitle').innerText    = 'Edit User';
+        document.getElementById('editUserId').value            = user.userId;
+        document.getElementById('editMode').value              = 'edit';
         document.getElementById('roleSelectWrapper').classList.add('d-none');
-        
-        document.getElementById('fEmail').value = user.email;
-        document.getElementById('fIsEmailVerified').checked = user.isEmailVerified;
-        document.getElementById('passwordLabel').innerText = "Change Password";
-        document.getElementById('passwordHint').innerText = "Leave blank to keep existing password.";
+        document.getElementById('fEmail').value                = user.email;
+        document.getElementById('fIsEmailVerified').checked    = user.isEmailVerified;
+        document.getElementById('passwordLabel').innerText     = 'Change Password';
+        document.getElementById('passwordHint').innerText      = 'Leave blank to keep existing password.';
 
         handleRoleSwitch(user.roleName);
 
-        if(user.roleName === 'Customer') {
-            document.getElementById('fFullName').value = user.fullName || "";
-            document.getElementById('fPhoneNo').value = user.phoneNo || "";
-            document.getElementById('fGender').value = user.gender || "";
-            document.getElementById('fDob').value = user.dateOfBirth || "";
-            document.getElementById('fAddressLine').value = user.addressLine || "";
-            document.getElementById('fCity').value = user.city || "";
-            document.getElementById('fPostalCode').value = user.postalCode || "";
-            document.getElementById('fCountry').value = user.country || "";
-        } else if(user.roleName === 'Supplier') {
-            document.getElementById('fSupplierName').value = user.supplierName || "";
-            document.getElementById('fContactPerson').value = user.contactPerson || "";
-            document.getElementById('fSupplierPhone').value = user.supplierPhone || "";
-            document.getElementById('fSupplierAddress').value = user.supplierAddress || "";
+        if (user.roleName === 'Customer') {
+            document.getElementById('fFullName').value    = user.fullName    || '';
+            document.getElementById('fPhoneNo').value     = user.phoneNo     || '';
+            document.getElementById('fGender').value      = user.gender      || '';
+            document.getElementById('fDob').value         = user.dateOfBirth || '';
+            document.getElementById('fAddressLine').value = user.addressLine || '';
+            document.getElementById('fCity').value        = user.city        || '';
+            document.getElementById('fPostalCode').value  = user.postalCode  || '';
+            document.getElementById('fCountry').value     = user.country     || '';
+        } else if (user.roleName === 'Supplier') {
+            document.getElementById('fSupplierName').value    = user.supplierName    || '';
+            document.getElementById('fContactPerson').value   = user.contactPerson   || '';
+            document.getElementById('fSupplierPhone').value   = user.supplierPhone   || '';
+            document.getElementById('fSupplierAddress').value = user.supplierAddress || '';
         }
 
         bsOffcanvas.show();
     };
 
+    // ── Save user ─────────────────────────────────────────────
     document.getElementById('btnSaveUser').addEventListener('click', async () => {
         document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-        document.querySelectorAll('.invalid-feedback').forEach(el => el.innerText = '');
-
-        const mode = document.getElementById('editMode').value;
-        const id = parseInt(document.getElementById('editUserId').value);
-        const activeRole = mode === 'create' 
-            ? document.querySelector('input[name="roleSelect"]:checked').value 
-            : usersList.find(u => u.userId === id).roleName;
         
-        const email = document.getElementById('fEmail').value.trim();
-        const password = document.getElementById('fPassword').value;
-        const isEmailVerified = document.getElementById('fIsEmailVerified').checked;
+        const feedbackIds = new Array(
+            'fEmailErr', 'fPasswordErr', 'fFullNameErr', 'fAddressLineErr',
+            'fPhoneNoErr', 'fDobErr', 'fPostalCodeErr',
+            'fSupplierNameErr', 'fSupplierPhoneErr'
+        );
+        feedbackIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.innerText = '';
+        });
+
+        const mode       = document.getElementById('editMode').value;
+        const id         = parseInt(document.getElementById('editUserId').value);
+        const activeRole = mode === 'create'
+            ? document.querySelector('input[name="roleSelect"]:checked').value
+            : usersList.find(u => u.userId === id).roleName;
+
+        const emailInput = document.getElementById('fEmail');
+        const passwordInput = document.getElementById('fPassword');
+        const emailVal = emailInput.value.trim();
+        const passwordVal = passwordInput.value;
+
+        let hasError = false;
+
+        // Email validation
+        if (!emailVal) {
+            emailInput.classList.add('is-invalid');
+            document.getElementById('fEmailErr').innerText = 'Email is required.';
+            hasError = true;
+        } else {
+            const emailRegex = /^[^\s@@]+@@[^\s@@]+\.[^\s@@]+$/;
+            if (!emailRegex.test(emailVal)) {
+                emailInput.classList.add('is-invalid');
+                document.getElementById('fEmailErr').innerText = 'Invalid email format.';
+                hasError = true;
+            }
+        }
+
+        // Password validation: min 8 characters, uppercase, lowercase, digit, and special character
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z\d]).{8,}$/;
+        if (mode === 'create') {
+            if (!passwordVal) {
+                passwordInput.classList.add('is-invalid');
+                document.getElementById('fPasswordErr').innerText = 'Password is required.';
+                hasError = true;
+            } else if (!passwordRegex.test(passwordVal)) {
+                passwordInput.classList.add('is-invalid');
+                document.getElementById('fPasswordErr').innerText = 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.';
+                hasError = true;
+            }
+        } else {
+            if (passwordVal && !passwordRegex.test(passwordVal)) {
+                passwordInput.classList.add('is-invalid');
+                document.getElementById('fPasswordErr').innerText = 'Password must be at least 8 characters and contain at least one uppercase letter, one lowercase letter, one digit, and one special character.';
+                hasError = true;
+            }
+        }
 
         const payload = {
             userId: id,
-            email: email,
-            password: password,
-            isEmailVerified: isEmailVerified,
+            email: emailVal,
+            password: passwordVal,
+            isEmailVerified: document.getElementById('fIsEmailVerified').checked,
             roleName: activeRole
         };
 
         if (activeRole === 'Customer') {
+            const fullNameInput = document.getElementById('fFullName');
+            const addressInput = document.getElementById('fAddressLine');
+            const phoneInput = document.getElementById('fPhoneNo');
+            const dobInput = document.getElementById('fDob');
+            const postalInput = document.getElementById('fPostalCode');
+
+            const fullNameVal = fullNameInput.value.trim();
+            const addressVal = addressInput.value.trim();
+            const phoneVal = phoneInput.value.trim();
+            const dobVal = dobInput.value;
+            const postalVal = postalInput.value.trim();
+
+            if (!fullNameVal) {
+                fullNameInput.classList.add('is-invalid');
+                document.getElementById('fFullNameErr').innerText = 'Full Name is required.';
+                hasError = true;
+            }
+            if (!addressVal) {
+                addressInput.classList.add('is-invalid');
+                document.getElementById('fAddressLineErr').innerText = 'Address Line is required.';
+                hasError = true;
+            }
+            if (phoneVal) {
+                const phoneRegex = /^\+?[0-9\s\-]{7,15}$/;
+                if (!phoneRegex.test(phoneVal)) {
+                    phoneInput.classList.add('is-invalid');
+                    document.getElementById('fPhoneNoErr').innerText = 'Invalid phone number format.';
+                    hasError = true;
+                }
+            }
+            if (postalVal) {
+                const numericRegex = /^\d+$/;
+                if (!numericRegex.test(postalVal)) {
+                    postalInput.classList.add('is-invalid');
+                    document.getElementById('fPostalCodeErr').innerText = 'Postal Code must contain numeric characters only.';
+                    hasError = true;
+                }
+            }
+            if (dobVal) {
+                const dobDate = new Date(dobVal);
+                const today = new Date();
+                if (dobDate > today) {
+                    dobInput.classList.add('is-invalid');
+                    document.getElementById('fDobErr').innerText = 'Date of Birth cannot be set in the future.';
+                    hasError = true;
+                }
+            }
+
             payload.customer = {
-                fullName: document.getElementById('fFullName').value.trim(),
-                phoneNo: document.getElementById('fPhoneNo').value.trim(),
-                address: document.getElementById('fAddressLine').value.trim(),
-                gender: document.getElementById('fGender').value,
-                dateOfBirth: document.getElementById('fDob').value ? document.getElementById('fDob').value : null,
-                city: document.getElementById('fCity').value.trim(),
-                postalCode: document.getElementById('fPostalCode').value.trim(),
-                country: document.getElementById('fCountry').value.trim()
+                fullName:    fullNameVal,
+                phoneNo:     phoneVal,
+                address:     addressVal,
+                gender:      document.getElementById('fGender').value,
+                dateOfBirth: dobVal || null,
+                city:        document.getElementById('fCity').value.trim(),
+                postalCode:  postalVal,
+                country:     document.getElementById('fCountry').value.trim()
             };
         } else if (activeRole === 'Supplier') {
+            const supplierNameInput = document.getElementById('fSupplierName');
+            const supplierPhoneInput = document.getElementById('fSupplierPhone');
+
+            const supplierNameVal = supplierNameInput.value.trim();
+            const supplierPhoneVal = supplierPhoneInput.value.trim();
+
+            if (!supplierNameVal) {
+                supplierNameInput.classList.add('is-invalid');
+                document.getElementById('fSupplierNameErr').innerText = 'Supplier Name is required.';
+                hasError = true;
+            }
+            if (supplierPhoneVal) {
+                const phoneRegex = /^\+?[0-9\s\-]{7,15}$/;
+                if (!phoneRegex.test(supplierPhoneVal)) {
+                    supplierPhoneInput.classList.add('is-invalid');
+                    document.getElementById('fSupplierPhoneErr').innerText = 'Invalid supplier phone format.';
+                    hasError = true;
+                }
+            }
+
             payload.supplier = {
-                supplierName: document.getElementById('fSupplierName').value.trim(),
+                supplierName:  supplierNameVal,
                 contactPerson: document.getElementById('fContactPerson').value.trim(),
-                phone: document.getElementById('fSupplierPhone').value.trim(),
-                address: document.getElementById('fSupplierAddress').value.trim()
+                phone:         supplierPhoneVal,
+                address:       document.getElementById('fSupplierAddress').value.trim()
             };
+        }
+
+        if (hasError) {
+            return;
         }
 
         try {
             const response = await fetch('/Users/Save', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-
             const result = await response.json();
 
             if (result.success) {
                 bsOffcanvas.hide();
-                showAlert('success', `User successfully ${mode === 'create' ? 'created' : 'updated'}.`);
+                showToast(`User successfully ${mode === 'create' ? 'created' : 'updated'}.`, 'success');
                 await loadUsers();
             } else if (result.errors) {
+                const fieldMap = {
+                    email: 'fEmail', password: 'fPassword', fullName: 'fFullName',
+                    address: 'fAddressLine', supplierName: 'fSupplierName'
+                };
+                const errMap = {
+                    email: 'fEmailErr', password: 'fPasswordErr', fullName: 'fFullNameErr',
+                    address: 'fAddressLineErr', supplierName: 'fSupplierNameErr'
+                };
                 for (const [key, msg] of Object.entries(result.errors)) {
-                    if (key === 'email') {
-                        document.getElementById('fEmail').classList.add('is-invalid');
-                        document.getElementById('fEmailErr').innerText = msg;
-                    } else if (key === 'password') {
-                        document.getElementById('fPassword').classList.add('is-invalid');
-                        document.getElementById('fPasswordErr').innerText = msg;
-                    } else if (key === 'fullName') {
-                        document.getElementById('fFullName').classList.add('is-invalid');
-                        document.getElementById('fFullNameErr').innerText = msg;
-                    } else if (key === 'address') {
-                        document.getElementById('fAddressLine').classList.add('is-invalid');
-                        const errDiv = document.getElementById('fAddressLineErr');
-                        if (errDiv) errDiv.innerText = msg;
-                    } else if (key === 'supplierName') {
-                        document.getElementById('fSupplierName').classList.add('is-invalid');
-                        document.getElementById('fSupplierNameErr').innerText = msg;
-                    }
+                    if (fieldMap[key]) document.getElementById(fieldMap[key])?.classList.add('is-invalid');
+                    if (errMap[key])   document.getElementById(errMap[key]).innerText = msg;
                 }
             } else {
-                showAlert('danger', result.message || 'An error occurred while saving the user.');
+                showToast(result.message || 'An error occurred while saving the user.', 'error');
             }
         } catch (error) {
             console.error('Error saving user:', error);
-            showAlert('danger', 'Failed to communicate with the server.');
+            showToast('Failed to communicate with the server.', 'error');
         }
     });
 
-    window.prepDelete = function(id) {
+    // ── Delete ────────────────────────────────────────────────
+    window.prepDelete = function (id) {
         const user = usersList.find(u => u.userId === id);
-        if(!user) return;
+        if (!user) return;
         deleteTargetId = id;
         document.getElementById('deleteUserName').innerText = user.email;
         bsDeleteModal.show();
     };
 
     document.getElementById('btnConfirmDelete').addEventListener('click', async () => {
-        if(deleteTargetId !== null) {
+        if (deleteTargetId !== null) {
             try {
-                const response = await fetch(`/Users/Delete?id=${deleteTargetId}`, {
-                    method: 'POST'
-                });
-                const result = await response.json();
+                const response = await fetch(`/Users/Delete?id=${deleteTargetId}`, { method: 'POST' });
+                const result   = await response.json();
                 if (result.success) {
                     bsDeleteModal.hide();
-                    showAlert('success', 'User successfully deleted.');
+                    showToast('User successfully deleted.', 'success');
                     await loadUsers();
                 } else {
-                    showAlert('danger', result.message || 'Failed to delete user.');
+                    showToast(result.message || 'Failed to delete user.', 'error');
                 }
             } catch (error) {
                 console.error('Error deleting user:', error);
-                showAlert('danger', 'Failed to communicate with the server.');
+                showToast('Failed to communicate with the server.', 'error');
             }
         }
     });
 </script>
-</body>
-</html>
+}

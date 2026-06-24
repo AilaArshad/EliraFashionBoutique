@@ -1,1085 +1,987 @@
 @{
-    Layout = null;
+    ViewData["Title"] = "Category Catalog Terminal";
+    Layout = "_Layout";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elira Management - Category Catalog Terminal</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
-        
-        /* Workspace UI Elements */
-        .card { background: white; border-radius: 8px; border: 1px solid #e2e8f0; }
-        .input-field { width: 100%; border: 1px solid #cbd5e1; border-radius: 4px; padding: 8px 12px; font-size: 14px; outline: none; transition: all 0.2s; }
-        .input-field:focus { border-color: #1e293b; ring: 1px; ring-color: #1e293b; }
-        .input-field:disabled { background-color: #f1f5f9; color: #64748b; cursor: not-allowed; border-color: #cbd5e1; }
-        .btn-workspace { background-color: #1e293b; color: white; font-size: 13px; font-weight: 500; transition: all 0.2s; }
-        .btn-workspace:hover { background-color: #0f172a; }
-        .section-heading { font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; tracking-wider: 0.05em; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 16px; }
-        
-        /* Table Styles with structural spacing */
-        th { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; padding: 12px; background-color: #f8fafc; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
-        td { font-size: 13px; color: #334155; padding: 12px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; white-space: nowrap; }
-        .truncate-text { max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-        /* Custom Animations */
-        .toast-enter { transform: translateY(-1rem); opacity: 0; }
-        .toast-show { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1); }
-    </style>
-</head>
-<body class="min-h-screen relative">
+@section Styles {
+<style>
+    /* Section heading strip */
+    .section-heading {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 10px;
+        margin-bottom: 18px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
 
-    <!-- Toast Notifications Container -->
-    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+    /* Registry form input field */
+    .input-field {
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        padding: 8px 12px;
+        font-size: 0.85rem;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        font-family: inherit;
+        color: var(--text-dark);
+    }
+    .input-field:focus {
+        border-color: #94a3b8;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .input-field:disabled {
+        background-color: var(--body-bg);
+        color: var(--text-muted);
+        cursor: not-allowed;
+    }
+    .input-field.is-error { border-color: var(--danger); }
 
-    <!-- Custom Premium Confirm Delete Modal -->
-    <div id="confirm-modal" class="fixed inset-0 z-50 hidden bg-slate-900/40 backdrop-blur-sm flex items-center justify-center">
-        <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4 shadow-xl border border-slate-100 transform scale-95 transition-all">
-            <div class="flex items-center gap-3 mb-3 text-rose-600">
-                <i class="fas fa-exclamation-triangle text-xl"></i>
-                <h3 class="text-lg font-bold text-slate-900">Confirm Deletion</h3>
+    /* Registry table */
+    .registry-table th {
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        background-color: var(--body-bg);
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border-color);
+        white-space: nowrap;
+    }
+    .registry-table td {
+        font-size: 0.83rem;
+        color: var(--text-body);
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border-light);
+        white-space: nowrap;
+        vertical-align: middle;
+    }
+    .registry-table tbody tr:last-child td { border-bottom: none; }
+    .registry-table tbody tr:hover td { background: #f8fafc; }
+
+    .btn-registry {
+        background-color: var(--elira-navy);
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 600;
+        border: none;
+        border-radius: 6px;
+        padding: 9px 14px;
+        width: 100%;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        cursor: pointer;
+        transition: background 0.15s, transform 0.1s;
+    }
+    .btn-registry:hover { background-color: var(--elira-navy-dark); transform: translateY(-1px); }
+    .btn-registry:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    .err-msg { color: var(--danger); font-size: 0.72rem; display: none; margin-top: 4px; font-weight: 500; }
+    .err-msg.visible { display: block; }
+
+    /* Color preview box */
+    #color-preview {
+        width: 36px;
+        height: 36px;
+        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        background: #fff;
+        flex-shrink: 0;
+        transition: background-color 0.2s;
+    }
+
+    /* Status badge small */
+    .badge-active   { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; font-size:0.7rem; padding: 2px 8px; border-radius: 20px; font-weight:600; }
+    .badge-inactive { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-size:0.7rem; padding: 2px 8px; border-radius: 20px; font-weight:600; }
+
+    /* Scrollable small table */
+    .mini-table-wrap { max-height: 230px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 8px; }
+</style>
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Category Catalog Terminal</h1>
+        <p class="page-subtitle">Relational workspace to view and manage catalog hierarchy data live.</p>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     1. BASE CATEGORY REGISTRY
+════════════════════════════════════════════════════════ -->
+<div class="content-card fade-in-up mb-4">
+    <div class="card-title-bar section-heading m-0" style="border-radius: 10px 10px 0 0; border-bottom: 1px solid var(--border-color);">
+        <i class="fa-solid fa-folder text-warning"></i> 1. Base Category Registry
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <!-- Form -->
+            <div class="col-12 col-lg-4">
+                <form id="category-form" onsubmit="saveCategory(event)" class="d-flex flex-column gap-3">
+                    <input type="hidden" id="category-id" value="0">
+                    <div>
+                        <label class="form-label small fw-semibold">Category Name</label>
+                        <input type="text" id="category-name" placeholder="e.g., Unstitched Fabric" class="input-field">
+                        <div class="err-msg" id="category-name-error">Category Name is required.</div>
+                    </div>
+                    <div>
+                        <label class="form-label small fw-semibold">Description</label>
+                        <textarea id="category-desc" rows="2" placeholder="Structural notes..." class="input-field" style="resize:none;"></textarea>
+                    </div>
+                    <button type="submit" id="category-submit" class="btn-registry">
+                        <i class="fa-solid fa-plus-circle"></i>
+                        <span>Save Category</span>
+                    </button>
+                </form>
             </div>
-            <p id="confirm-message" class="text-slate-500 text-sm mb-6">Are you sure you want to delete this record? This action cannot be undone.</p>
-            <div class="flex justify-end gap-3">
-                <button id="confirm-cancel" class="px-4 py-2 text-xs font-semibold text-slate-500 hover:text-slate-800 border border-slate-200 rounded">Cancel</button>
-                <button id="confirm-ok" class="px-4 py-2 text-xs font-semibold text-white bg-rose-600 hover:bg-rose-700 rounded">Delete</button>
+            <!-- Table -->
+            <div class="col-12 col-lg-8">
+                <div class="mini-table-wrap">
+                    <table class="table registry-table m-0" id="category-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Category Name</th>
+                                <th>Description</th>
+                                <th class="text-end pe-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
+</div>
 
-    <main class="p-4 sm:p-6 lg:p-8 w-full overflow-hidden mx-auto max-w-7xl">
-        
-        <header class="mb-6 lg:mb-8 flex justify-between items-center">
-            <div>
-                <h1 class="text-xl sm:text-2xl font-bold text-slate-900">Category Catalog Terminal</h1>
-                <p class="text-slate-500 text-xs sm:text-sm mt-0.5">Relational workspace to view and manage data entries live.</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <a class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300" href="/Product/Index">
-                    <i class="fas fa-box"></i> Product Catalog Studio
-                </a>
-                <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Live Connected
-                </span>
-            </div>
-        </header>
-
-        <div class="space-y-6 sm:space-y-8">
-            
-            <!-- Category Registry -->
-            <div class="card p-4 sm:p-6 shadow-sm">
-                <div class="section-heading flex items-center">
-                    <i class="fas fa-folder text-amber-500 mr-2"></i> 1. Base Category Registry
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <form id="category-form" class="space-y-4 lg:border-r lg:border-slate-100 lg:pr-6" onsubmit="saveCategory(event)">
-                        <input type="hidden" id="category-id" value="0">
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Category Name</label>
-                            <input type="text" id="category-name" placeholder="e.g., Unstitched Fabric" class="input-field">
-                            <span id="category-name-error" class="text-rose-500 text-[11px] hidden mt-1 block font-medium">Category Name is required.</span>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Description</label>
-                            <textarea id="category-desc" rows="2" placeholder="Structural notes..." class="input-field resize-none"></textarea>
-                        </div>
-                        <button type="submit" id="category-submit" class="w-full btn-workspace py-2.5 rounded font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
-                            <i class="fas fa-plus-circle"></i> <span>Save Category</span>
-                        </button>
-                    </form>
-                    <div class="lg:col-span-2 overflow-x-auto border border-slate-100 rounded-md">
-                        <table class="w-full min-w-[500px] text-left border-collapse" id="category-table">
-                            <thead>
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Category Name</th>
-                                    <th>Description</th>
-                                    <th class="text-right px-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                            </tbody>
-                        </table>
+<!-- ══════════════════════════════════════════════════════
+     2. SUB-CATEGORY MATRIX
+════════════════════════════════════════════════════════ -->
+<div class="content-card mb-4">
+    <div class="card-title-bar section-heading m-0" style="border-radius: 10px 10px 0 0; border-bottom: 1px solid var(--border-color);">
+        <i class="fa-solid fa-sitemap text-info"></i> 2. Sub-Category Matrix
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <!-- Form -->
+            <div class="col-12 col-lg-4">
+                <form id="subcategory-form" onsubmit="saveSubCategory(event)" class="d-flex flex-column gap-3">
+                    <input type="hidden" id="subcategory-id" value="0">
+                    <div>
+                        <label class="form-label small fw-semibold">Parent Category</label>
+                        <select id="subcategory-parent" class="input-field" style="background-color: var(--body-bg);">
+                            <option value="">Select Parent</option>
+                        </select>
+                        <div class="err-msg" id="subcategory-parent-error">Parent is required.</div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Sub-Category Matrix -->
-            <div class="card p-4 sm:p-6 shadow-sm">
-                <div class="section-heading flex items-center">
-                    <i class="fas fa-sitemap text-sky-500 mr-2"></i> 2. Sub-Category Matrix
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <form id="subcategory-form" class="space-y-4 lg:border-r lg:border-slate-100 lg:pr-6" onsubmit="saveSubCategory(event)">
-                        <input type="hidden" id="subcategory-id" value="0">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Parent Category</label>
-                                <select id="subcategory-parent" class="input-field bg-slate-50">
-                                    <option value="">Select Parent</option>
-                                </select>
-                                <span id="subcategory-parent-error" class="text-rose-500 text-[11px] hidden mt-1 block font-medium">Parent is required.</span>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-500 mb-1">Sub-Category Name</label>
-                            <input type="text" id="subcategory-name" placeholder="e.g., Lawn" class="input-field">
-                            <span id="subcategory-name-error" class="text-rose-500 text-[11px] hidden mt-1 block font-medium">Sub-Category Name is required.</span>
-                        </div>
-                        <div class="grid grid-cols-3 gap-2">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Season</label>
-                                <input type="text" id="subcategory-season" placeholder="Summer" class="input-field !px-2">
-                                <span id="subcategory-season-error" class="text-rose-500 text-[9px] hidden mt-0.5 block font-medium">Required</span>
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">Start Date</label>
-                                <input type="date" id="subcategory-start" class="input-field !px-1 text-xs">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 mb-0.5">End Date</label>
-                                <input type="date" id="subcategory-end" class="input-field !px-1 text-xs">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="flex items-center space-x-2 text-xs font-bold text-slate-600 cursor-pointer py-1">
-                                <input type="checkbox" id="subcategory-active" checked class="rounded border-slate-300 text-slate-800 focus:ring-slate-500 w-4 h-4">
-                                <span>IsActive Status</span>
-                            </label>
-                        </div>
-                        <button type="submit" id="subcategory-submit" class="w-full btn-workspace py-2.5 rounded font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
-                            <i class="fas fa-link"></i> <span>Save Sub-Category</span>
-                        </button>
-                    </form>
-                    <div class="lg:col-span-2 overflow-x-auto border border-slate-100 rounded-md">
-                        <table class="w-full min-w-[750px] text-left border-collapse" id="subcategory-table">
-                            <thead>
-                                <tr>
-                                    <th>Code</th>
-                                    <th>Sub-Category Name</th>
-                                    <th>Parent Category</th>
-                                    <th>Season</th>
-                                    <th>Timeline</th>
-                                    <th>Status</th>
-                                    <th class="text-right px-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Loaded dynamically -->
-                            </tbody>
-                        </table>
+                    <div>
+                        <label class="form-label small fw-semibold">Sub-Category Name</label>
+                        <input type="text" id="subcategory-name" placeholder="e.g., Lawn" class="input-field">
+                        <div class="err-msg" id="subcategory-name-error">Sub-Category Name is required.</div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Promotion Registry -->
-            <div class="card p-4 sm:p-6 shadow-sm">
-                <div class="section-heading flex items-center">
-                    <i class="fas fa-percentage text-emerald-500 mr-2"></i> 3. Promotion Rule Matrix
-                </div>
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <form id="promotion-form" class="space-y-4 lg:border-r lg:border-slate-100 lg:pr-6" onsubmit="savePromotion(event)">
-                        <input type="hidden" id="promotion-id" value="0">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Target Sub-Category</label>
-                                <select id="promotion-sub" class="input-field bg-slate-50">
-                                    <option value="">Select Target Sub</option>
-                                </select>
-                                <span id="promotion-sub-error" class="text-rose-500 text-[11px] hidden mt-1 block font-medium">Target sub is required.</span>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Discount Metric</label>
-                                <input type="text" id="promotion-discount" placeholder="15% OFF" class="input-field">
-                            </div>
+                    <div class="row g-2">
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold" style="font-size:0.72rem;">Season</label>
+                            <input type="text" id="subcategory-season" placeholder="Summer" class="input-field">
+                            <div class="err-msg" id="subcategory-season-error">Required</div>
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Promotion Name</label>
-                                <input type="text" id="promotion-name" placeholder="Clearance Pack" class="input-field">
-                                <span id="promotion-name-error" class="text-rose-500 text-[11px] hidden mt-1 block font-medium">Name is required.</span>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Promotion Type</label>
-                                <input type="text" id="promotion-type" placeholder="Seasonal" class="input-field">
-                            </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold" style="font-size:0.72rem;">Start Date</label>
+                            <input type="date" id="subcategory-start" class="input-field">
                         </div>
-                        <div class="grid grid-cols-2 gap-2">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">Start Date</label>
-                                <input type="date" id="promotion-start" class="input-field text-xs">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-500 mb-1">End Date</label>
-                                <input type="date" id="promotion-end" class="input-field text-xs">
-                            </div>
+                        <div class="col-4">
+                            <label class="form-label small fw-semibold" style="font-size:0.72rem;">End Date</label>
+                            <input type="date" id="subcategory-end" class="input-field">
                         </div>
-                        <div>
-                            <label class="flex items-center space-x-2 text-xs font-bold text-slate-600 cursor-pointer py-1">
-                                <input type="checkbox" id="promotion-active" checked class="rounded border-slate-300 text-slate-800 focus:ring-slate-500 w-4 h-4">
-                                <span>IsActive Status</span>
-                            </label>
-                        </div>
-                        <button type="submit" id="promotion-submit" class="w-full btn-workspace py-2.5 rounded font-semibold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
-                            <i class="fas fa-bolt"></i> <span>Save Promotion Rule</span>
-                        </button>
-                    </form>
-                    <div class="lg:col-span-2 overflow-x-auto border border-slate-100 rounded-md">
-                        <table class="w-full min-w-[750px] text-left border-collapse" id="promotion-table">
-                            <thead>
-                                <tr>
-                                    <th>Target Sub</th>
-                                    <th>Promotion Name</th>
-                                    <th>Type / Metric</th>
-                                    <th>Duration Timeline</th>
-                                    <th>Status</th>
-                                    <th class="text-right px-4">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Loaded dynamically -->
-                            </tbody>
-                        </table>
                     </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="subcategory-active" checked>
+                        <label class="form-check-label small fw-semibold" for="subcategory-active">IsActive</label>
+                    </div>
+                    <button type="submit" id="subcategory-submit" class="btn-registry">
+                        <i class="fa-solid fa-link"></i>
+                        <span>Save Sub-Category</span>
+                    </button>
+                </form>
+            </div>
+            <!-- Table -->
+            <div class="col-12 col-lg-8">
+                <div class="mini-table-wrap">
+                    <table class="table registry-table m-0" id="subcategory-table">
+                        <thead>
+                            <tr>
+                                <th>Code</th>
+                                <th>Sub-Category</th>
+                                <th>Parent</th>
+                                <th>Season</th>
+                                <th>Timeline</th>
+                                <th>Status</th>
+                                <th class="text-end pe-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
 
-            <!-- Color and Size Dual Column Grid -->
-            <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
-                <!-- Color Variant Registry -->
-                <div class="card p-4 sm:p-6 shadow-sm">
-                    <div class="section-heading flex items-center"><i class="fas fa-palette text-purple-500 mr-2"></i> 4a. Color Variant Registry</div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <form id="color-form" class="space-y-3 md:border-r md:border-slate-50 md:pr-4" onsubmit="saveColor(event)">
+<!-- ══════════════════════════════════════════════════════
+     3. PROMOTION RULE MATRIX
+════════════════════════════════════════════════════════ -->
+<div class="content-card mb-4">
+    <div class="card-title-bar section-heading m-0" style="border-radius: 10px 10px 0 0; border-bottom: 1px solid var(--border-color);">
+        <i class="fa-solid fa-percentage" style="color: var(--success);"></i> 3. Promotion Rule Matrix
+    </div>
+    <div class="card-body">
+        <div class="row g-4">
+            <!-- Form -->
+            <div class="col-12 col-lg-4">
+                <form id="promotion-form" onsubmit="savePromotion(event)" class="d-flex flex-column gap-3">
+                    <input type="hidden" id="promotion-id" value="0">
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold">Target Sub-Category</label>
+                            <select id="promotion-sub" class="input-field" style="background-color: var(--body-bg);">
+                                <option value="">Select Target Sub</option>
+                            </select>
+                            <div class="err-msg" id="promotion-sub-error">Target sub is required.</div>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-semibold">Discount Metric</label>
+                            <input type="text" id="promotion-discount" placeholder="15% OFF" class="input-field">
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-7">
+                            <label class="form-label small fw-semibold">Promotion Name</label>
+                            <input type="text" id="promotion-name" placeholder="Clearance Pack" class="input-field">
+                            <div class="err-msg" id="promotion-name-error">Name is required.</div>
+                        </div>
+                        <div class="col-5">
+                            <label class="form-label small fw-semibold">Promo Type</label>
+                            <input type="text" id="promotion-type" placeholder="Seasonal" class="input-field">
+                        </div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold" style="font-size:0.72rem;">Start Date</label>
+                            <input type="date" id="promotion-start" class="input-field">
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label small fw-semibold" style="font-size:0.72rem;">End Date</label>
+                            <input type="date" id="promotion-end" class="input-field">
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input type="checkbox" class="form-check-input" id="promotion-active" checked>
+                        <label class="form-check-label small fw-semibold" for="promotion-active">IsActive</label>
+                    </div>
+                    <button type="submit" id="promotion-submit" class="btn-registry">
+                        <i class="fa-solid fa-bolt"></i>
+                        <span>Save Promotion Rule</span>
+                    </button>
+                </form>
+            </div>
+            <!-- Table -->
+            <div class="col-12 col-lg-8">
+                <div class="mini-table-wrap">
+                    <table class="table registry-table m-0" id="promotion-table">
+                        <thead>
+                            <tr>
+                                <th>Target Sub</th>
+                                <th>Promo Name</th>
+                                <th>Type / Metric</th>
+                                <th>Duration</th>
+                                <th>Status</th>
+                                <th class="text-end pe-3">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════
+     4. COLOR & SIZE VARIANT REGISTRIES
+════════════════════════════════════════════════════════ -->
+<div class="row g-4 mb-2">
+    <!-- 4a. Color Registry -->
+    <div class="col-12 col-xl-6">
+        <div class="content-card h-100">
+            <div class="card-title-bar section-heading m-0" style="border-radius: 10px 10px 0 0; border-bottom: 1px solid var(--border-color);">
+                <i class="fa-solid fa-palette" style="color:#a855f7;"></i> 4a. Color Variant Registry
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-5">
+                        <form id="color-form" onsubmit="saveColor(event)" class="d-flex flex-column gap-3">
                             <input type="hidden" id="color-id" value="0">
                             <div>
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Color Name</label>
-                                <input type="text" id="color-name" placeholder="Blue" class="input-field !py-1.5">
-                                <span id="color-name-error" class="text-rose-500 text-[10px] hidden mt-0.5 block font-medium">Color Name is required.</span>
+                                <label class="form-label small fw-semibold">Color Name</label>
+                                <input type="text" id="color-name" placeholder="Blue" class="input-field">
+                                <div class="err-msg" id="color-name-error">Color Name is required.</div>
                             </div>
                             <div>
-                                <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Hex Code</label>
-                                <div class="flex gap-2">
-                                    <input type="text" id="color-hex" placeholder="#0000FF" class="input-field !py-1.5 flex-grow" oninput="updateColorPreview(this.value)">
-                                    <div id="color-preview" class="w-9 h-9 rounded border border-slate-200 bg-white shadow-sm flex-shrink-0 transition-all"></div>
+                                <label class="form-label small fw-semibold">Hex Code</label>
+                                <div class="d-flex gap-2">
+                                    <input type="text" id="color-hex" placeholder="#0000FF" class="input-field" oninput="updateColorPreview(this.value)">
+                                    <div id="color-preview"></div>
                                 </div>
                             </div>
-                            <button type="submit" id="color-submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 rounded text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-1.5">
-                                Save Color
-                            </button>
+                            <button type="submit" id="color-submit" class="btn-registry">Save Color</button>
                         </form>
-                        <div class="overflow-x-auto border border-slate-100 rounded-md md:border-none md:overflow-y-auto max-h-[220px]">
-                            <table class="w-full text-left text-xs min-w-[200px]" id="color-table">
+                    </div>
+                    <div class="col-12 col-md-7">
+                        <div class="mini-table-wrap">
+                            <table class="table registry-table m-0" id="color-table">
                                 <thead>
                                     <tr>
                                         <th>Code</th>
                                         <th>Color Name</th>
                                         <th>Hex Spec</th>
-                                        <th class="text-right px-2">Action</th>
+                                        <th class="text-end pe-2">Action</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    <!-- Loaded dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Size Variant Registry -->
-                <div class="card p-4 sm:p-6 shadow-sm">
-                    <div class="section-heading flex items-center"><i class="fas fa-ruler-combined text-indigo-500 mr-2"></i> 4b. Size Variant Registry</div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <form id="size-form" class="space-y-3 md:border-r md:border-slate-50 md:pr-4 flex flex-col justify-between" onsubmit="saveSize(event)">
-                            <input type="hidden" id="size-id" value="0">
-                            <div>                               
-                                <div>
-                                    <label class="block text-[11px] font-semibold text-slate-500 mb-0.5">Size Name</label>
-                                    <input type="text" id="size-name" placeholder="M" class="input-field !py-1.5">
-                                    <span id="size-name-error" class="text-rose-500 text-[10px] hidden mt-0.5 block font-medium">Size Name is required.</span>
-                                </div>
-                            </div>
-                            <button type="submit" id="size-submit" class="w-full bg-slate-800 hover:bg-slate-900 text-white py-2 rounded text-xs font-bold uppercase tracking-wider mt-4 flex items-center justify-center gap-1.5">
-                                Save Size
-                            </button>
-                        </form>
-                        <div class="overflow-x-auto border border-slate-100 rounded-md md:border-none md:overflow-y-auto max-h-[220px]">
-                            <table class="w-full text-left text-xs min-w-[200px]" id="size-table">
-                                <thead>
-                                    <tr>
-                                        <th>Code</th>
-                                        <th>Size Code</th>
-                                        <th class="text-right px-2">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Loaded dynamically -->
-                                </tbody>
+                                <tbody></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
-    <!-- Global Application Code -->
-    <script>
-        // Store current states
-        let categories = [];
-        let subcategories = [];
-        let promotions = [];
-        let colors = [];
-        let sizes = [];
+    <!-- 4b. Size Registry -->
+    <div class="col-12 col-xl-6">
+        <div class="content-card h-100">
+            <div class="card-title-bar section-heading m-0" style="border-radius: 10px 10px 0 0; border-bottom: 1px solid var(--border-color);">
+                <i class="fa-solid fa-ruler-combined" style="color:#6366f1;"></i> 4b. Size Variant Registry
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-5">
+                        <form id="size-form" onsubmit="saveSize(event)" class="d-flex flex-column gap-3">
+                            <input type="hidden" id="size-id" value="0">
+                            <div>
+                                <label class="form-label small fw-semibold">Size Name</label>
+                                <input type="text" id="size-name" placeholder="M" class="input-field">
+                                <div class="err-msg" id="size-name-error">Size Name is required.</div>
+                            </div>
+                            <button type="submit" id="size-submit" class="btn-registry mt-auto">Save Size</button>
+                        </form>
+                    </div>
+                    <div class="col-12 col-md-7">
+                        <div class="mini-table-wrap">
+                            <table class="table registry-table m-0" id="size-table">
+                                <thead>
+                                    <tr>
+                                        <th>Code</th>
+                                        <th>Size Code</th>
+                                        <th class="text-end pe-2">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-        // Delete modal confirmation callback tracker
-        let activeDeleteCallback = null;
+</div>
 
-        // Startup lifecycle
-        document.addEventListener("DOMContentLoaded", () => {
-            loadAllData();
-            setupDeleteModal();
+<!-- ── Bootstrap Delete Confirm Modal ── -->
+<div class="modal fade" id="confirmDeleteModal" tabindex="-1">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header py-3">
+                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-danger"></i> Confirm Deletion
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message" class="text-muted mb-0" style="font-size:0.88rem;">
+                    Are you sure you want to delete this record? This action cannot be undone.
+                </p>
+            </div>
+            <div class="modal-footer border-0 pt-0">
+                <button class="btn btn-outline-secondary btn-sm px-3" data-bs-dismiss="modal">Cancel</button>
+                <button class="btn btn-danger btn-sm px-3" id="confirm-ok-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    // ─── State ────────────────────────────────────────────────
+    let categories   = [];
+    let subcategories = [];
+    let promotions   = [];
+    let colors       = [];
+    let sizes        = [];
+
+    let activeDeleteCallback = null;
+    const bsConfirmModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadAllData();
+        document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+            bsConfirmModal.hide();
+            if (activeDeleteCallback) { activeDeleteCallback(); activeDeleteCallback = null; }
         });
+    });
 
-        // Fetch wrapper to handle request settings with JSON defaults
-        async function apiCall(url, method = "GET", body = null) {
-            const options = {
-                method: method,
-                headers: {
-                    "Content-Type": "application/json"
-                }
-            };
-            if (body) {
-                options.body = JSON.stringify(body);
-            }
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    throw new Error(`API failed: ${response.statusText}`);
-                }
-                return await response.json();
-            } catch (err) {
-                console.error(err);
-                showToast(err.message, "error");
-                return { success: false, message: err.message };
-            }
+    // ─── API helper ───────────────────────────────────────────
+    async function apiCall(url, method = 'GET', body = null) {
+        const options = { method, headers: { 'Content-Type': 'application/json' } };
+        if (body) options.body = JSON.stringify(body);
+        try {
+            const response = await fetch(url, options);
+            if (!response.ok) throw new Error(`API failed: ${response.statusText}`);
+            return await response.json();
+        } catch (err) {
+            console.error(err);
+            showToast(err.message, 'error');
+            return { success: false, message: err.message };
         }
+    }
 
-        // Load all tables and configurations
-        async function loadAllData() {
-            try {
-                const [cats, subs, proms, cols, szs] = await Promise.all([
-                    fetch("/Category/List").then(res => res.json()),
-                    fetch("/SubCategory/List").then(res => res.json()),
-                    fetch("/Promotion/List").then(res => res.json()),
-                    fetch("/Color/List").then(res => res.json()),
-                    fetch("/Size/List").then(res => res.json())
-                ]);
+    // ─── Confirm Delete dialog ────────────────────────────────
+    function triggerDeleteConfirmation(message, onConfirm) {
+        document.getElementById('confirm-message').textContent = message;
+        activeDeleteCallback = onConfirm;
+        bsConfirmModal.show();
+    }
 
-                categories = cats;
-                subcategories = subs;
-                promotions = proms;
-                colors = cols;
-                sizes = szs;
+    // ─── Color preview ────────────────────────────────────────
+    function updateColorPreview(val) {
+        const preview = document.getElementById('color-preview');
+        preview.style.backgroundColor = (val && /^#[0-9A-F]{6}$/i.test(val)) ? val : '#ffffff';
+    }
 
-                renderCategories();
-                renderSubCategories();
-                renderPromotions();
-                renderColors();
-                renderSizes();
+    // ─── Load all data ────────────────────────────────────────
+    async function loadAllData() {
+        try {
+            const [cats, subs, proms, cols, szs] = await Promise.all([
+                fetch('/Category/List').then(r => r.json()),
+                fetch('/SubCategory/List').then(r => r.json()),
+                fetch('/Promotion/List').then(r => r.json()),
+                fetch('/Color/List').then(r => r.json()),
+                fetch('/Size/List').then(r => r.json())
+            ]);
+            categories    = cats;
+            subcategories = subs;
+            promotions    = proms;
+            colors        = cols;
+            sizes         = szs;
 
-                populateCategoryDropdowns();
-                populateSubCategoryDropdowns();
-            } catch (err) {
-                showToast("Error loading catalogs: " + err.message, "error");
-            }
+            renderCategories();
+            renderSubCategories();
+            renderPromotions();
+            renderColors();
+            renderSizes();
+            populateCategoryDropdowns();
+            populateSubCategoryDropdowns();
+        } catch (err) {
+            showToast('Error loading catalogs: ' + err.message, 'error');
         }
+    }
 
-        // Show a premium floating toast notification
-        function showToast(message, type = "success") {
-            const container = document.getElementById("toast-container");
-            const toast = document.createElement("div");
-            toast.className = `p-3 rounded-lg shadow-lg text-xs font-semibold flex items-center gap-2 border bg-white pointer-events-auto toast-enter ${
-                type === "success" 
-                    ? "text-emerald-700 bg-emerald-50 border-emerald-200" 
-                    : "text-rose-700 bg-rose-50 border-rose-200"
-            }`;
-            
-            const icon = document.createElement("i");
-            icon.className = type === "success" ? "fas fa-check-circle text-emerald-500" : "fas fa-times-circle text-rose-500";
-            
-            const text = document.createElement("span");
-            text.textContent = message;
+    function populateCategoryDropdowns() {
+        const dd = document.getElementById('subcategory-parent');
+        const selected = dd.value;
+        dd.innerHTML = '<option value="">Select Parent</option>';
+        categories.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = c.categoryId;
+            opt.textContent = c.categoryName;
+            dd.appendChild(opt);
+        });
+        dd.value = selected;
+    }
 
-            toast.appendChild(icon);
-            toast.appendChild(text);
-            container.appendChild(toast);
+    function populateSubCategoryDropdowns() {
+        const dd = document.getElementById('promotion-sub');
+        const selected = dd.value;
+        dd.innerHTML = '<option value="">Select Target Sub</option>';
+        subcategories.forEach(s => {
+            const opt = document.createElement('option');
+            opt.value = s.subCategoryId;
+            opt.textContent = s.subcategoryName;
+            dd.appendChild(opt);
+        });
+        dd.value = selected;
+    }
 
-            // Trigger animation frame
-            requestAnimationFrame(() => {
-                toast.classList.add("toast-show");
-            });
+    // ─── Error helpers ────────────────────────────────────────
+    function setError(id, visible) {
+        const el = document.getElementById(id);
+        if (el) { visible ? el.classList.add('visible') : el.classList.remove('visible'); }
+    }
+    function setInputError(id, hasError) {
+        const el = document.getElementById(id);
+        if (el) { hasError ? el.classList.add('is-error') : el.classList.remove('is-error'); }
+    }
 
-            // Auto dismiss toast
-            setTimeout(() => {
-                toast.classList.remove("toast-show");
-                toast.style.transform = "translateY(-1rem)";
-                toast.style.opacity = "0";
-                toast.style.transition = "all 0.3s cubic-bezier(0.16, 1, 0.3, 1)";
-                setTimeout(() => toast.remove(), 300);
-            }, 3000);
+    // ════════════════════════════════════════════════════
+    // 1. CATEGORY
+    // ════════════════════════════════════════════════════
+    function renderCategories() {
+        const tbody = document.querySelector('#category-table tbody');
+        tbody.innerHTML = '';
+        categories.forEach(c => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="fw-semibold text-muted">#${c.categoryId}</td>
+                <td class="fw-medium text-dark">${c.categoryName}</td>
+                <td class="truncate text-muted" title="${c.description || ''}">${c.description || 'N/A'}</td>
+                <td class="text-end pe-3">
+                    <button onclick="editCategory(${c.categoryId})" class="btn btn-sm btn-action me-1">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button onclick="deleteCategory(${c.categoryId})" class="btn btn-sm btn-action btn-action-danger">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function editCategory(id) {
+        const c = categories.find(x => x.categoryId === id);
+        if (!c) return;
+        document.getElementById('category-id').value = c.categoryId;
+        document.getElementById('category-name').value = c.categoryName;
+        document.getElementById('category-desc').value = c.description || '';
+        const btn = document.getElementById('category-submit');
+        btn.querySelector('span').textContent = 'Update Category';
+        btn.querySelector('i').className = 'fa-solid fa-check-circle';
+        clearCategoryErrors();
+    }
+
+    function clearCategoryErrors() {
+        setError('category-name-error', false);
+        setInputError('category-name', false);
+    }
+
+    function clearCategoryForm() {
+        document.getElementById('category-id').value = '0';
+        document.getElementById('category-form').reset();
+        const btn = document.getElementById('category-submit');
+        btn.querySelector('span').textContent = 'Save Category';
+        btn.querySelector('i').className = 'fa-solid fa-plus-circle';
+        clearCategoryErrors();
+    }
+
+    async function saveCategory(event) {
+        event.preventDefault();
+        const id   = parseInt(document.getElementById('category-id').value) || 0;
+        const name = document.getElementById('category-name').value.trim();
+        const desc = document.getElementById('category-desc').value.trim();
+
+        if (!name) {
+            setError('category-name-error', true);
+            setInputError('category-name', true);
+            return;
         }
+        clearCategoryErrors();
 
-        // Custom Confirm Delete Dialog handlers
-        function setupDeleteModal() {
-            const modal = document.getElementById("confirm-modal");
-            const btnCancel = document.getElementById("confirm-cancel");
-            const btnOk = document.getElementById("confirm-ok");
+        const btn = document.getElementById('category-submit');
+        btn.disabled = true;
+        const result = await apiCall('/Category/Save', 'POST', { categoryId: id, categoryName: name, description: desc });
+        btn.disabled = false;
 
-            btnCancel.addEventListener("click", () => {
-                modal.classList.add("hidden");
-                activeDeleteCallback = null;
-            });
-
-            btnOk.addEventListener("click", () => {
-                modal.classList.add("hidden");
-                if (activeDeleteCallback) {
-                    activeDeleteCallback();
-                    activeDeleteCallback = null;
-                }
-            });
+        if (result.success) {
+            showToast(id === 0 ? 'Category created successfully!' : 'Category updated successfully!');
+            clearCategoryForm();
+            await loadAllData();
+        } else {
+            showToast(result.message || 'Save failed.', 'error');
         }
+    }
 
-        function triggerDeleteConfirmation(message, onConfirm) {
-            document.getElementById("confirm-message").textContent = message;
-            document.getElementById("confirm-modal").classList.remove("hidden");
-            activeDeleteCallback = onConfirm;
-        }
-
-        // Update hex color box preview
-        function updateColorPreview(val) {
-            const preview = document.getElementById("color-preview");
-            if (val && val.match(/^#[0-9A-F]{6}$/i)) {
-                preview.style.backgroundColor = val;
-            } else {
-                preview.style.backgroundColor = "#FFFFFF";
-            }
-        }
-
-        // Re-populate Parent Category Select Dropdown
-        function populateCategoryDropdowns() {
-            const dropdown = document.getElementById("subcategory-parent");
-            const selectedVal = dropdown.value;
-            dropdown.innerHTML = '<option value="">Select Parent</option>';
-            categories.forEach(c => {
-                const opt = document.createElement("option");
-                opt.value = c.categoryId;
-                opt.textContent = c.categoryName;
-                dropdown.appendChild(opt);
-            });
-            dropdown.value = selectedVal;
-        }
-
-        // Re-populate Target Sub-Category Select Dropdown
-        function populateSubCategoryDropdowns() {
-            const dropdown = document.getElementById("promotion-sub");
-            const selectedVal = dropdown.value;
-            dropdown.innerHTML = '<option value="">Select Target Sub</option>';
-            subcategories.forEach(s => {
-                const opt = document.createElement("option");
-                opt.value = s.subCategoryId;
-                opt.textContent = s.subcategoryName;
-                dropdown.appendChild(opt);
-            });
-            dropdown.value = selectedVal;
-        }
-
-        // 1. RENDER & SAVE CATEGORY
-        function renderCategories() {
-            const tbody = document.querySelector("#category-table tbody");
-            tbody.innerHTML = "";
-            categories.forEach(c => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td class="font-semibold text-slate-500">#${c.categoryId}</td>
-                    <td class="font-medium text-slate-800">${c.categoryName}</td>
-                    <td class="text-slate-500 truncate-text" title="${c.description || ''}">${c.description || 'N/A'}</td>
-                    <td class="text-right px-4">
-                        <button onclick="editCategory(${c.categoryId})" class="text-slate-600 hover:text-slate-900 font-semibold text-xs mr-3"><i class="fas fa-edit"></i> Edit</button>
-                        <button onclick="deleteCategory(${c.categoryId})" class="text-rose-600 hover:text-rose-900 font-semibold text-xs"><i class="fas fa-trash-alt"></i> Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function editCategory(id) {
-            const c = categories.find(item => item.categoryId === id);
-            if (!c) return;
-            document.getElementById("category-id").value = c.categoryId;
-            document.getElementById("category-name").value = c.categoryName;
-            document.getElementById("category-desc").value = c.description || "";
-            document.getElementById("category-submit").querySelector("span").textContent = "Update Category";
-            document.getElementById("category-submit").querySelector("i").className = "fas fa-check-circle";
-            
-            // Clear errors
-            document.getElementById("category-name-error").classList.add("hidden");
-            document.getElementById("category-name").classList.remove("border-rose-500");
-        }
-
-        function clearCategoryForm() {
-            document.getElementById("category-id").value = "0";
-            document.getElementById("category-form").reset();
-            document.getElementById("category-submit").querySelector("span").textContent = "Save Category";
-            document.getElementById("category-submit").querySelector("i").className = "fas fa-plus-circle";
-            
-            // Clear errors
-            document.getElementById("category-name-error").classList.add("hidden");
-            document.getElementById("category-name").classList.remove("border-rose-500");
-        }
-
-        async function saveCategory(event) {
-            event.preventDefault();
-            const id = parseInt(document.getElementById("category-id").value) || 0;
-            const name = document.getElementById("category-name").value.trim();
-            const desc = document.getElementById("category-desc").value.trim();
-
-            let hasError = false;
-            if (!name) {
-                document.getElementById("category-name-error").classList.remove("hidden");
-                document.getElementById("category-name").classList.add("border-rose-500");
-                hasError = true;
-            } else {
-                document.getElementById("category-name-error").classList.add("hidden");
-                document.getElementById("category-name").classList.remove("border-rose-500");
-            }
-
-            if (hasError) return;
-
-            const submitBtn = document.getElementById("category-submit");
-            submitBtn.disabled = true;
-            submitBtn.classList.add("opacity-50", "cursor-not-allowed");
-
-            const result = await apiCall("/Category/Save", "POST", {
-                categoryId: id,
-                categoryName: name,
-                description: desc
-            });
-
-            submitBtn.disabled = false;
-            submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
-
+    function deleteCategory(id) {
+        triggerDeleteConfirmation('Are you sure you want to delete this Category? All linked Sub-Categories and Promotions will be permanently removed.', async () => {
+            const result = await apiCall(`/Category/Delete/${id}`, 'POST');
             if (result.success) {
-                showToast(id === 0 ? "Category created successfully!" : "Category updated successfully!");
+                showToast('Category deleted successfully!');
                 clearCategoryForm();
                 await loadAllData();
             } else {
-                showToast(result.message || "Save failed.", "error");
+                showToast(result.message || 'Delete failed.', 'error');
             }
+        });
+    }
+
+    // ════════════════════════════════════════════════════
+    // 2. SUB-CATEGORY
+    // ════════════════════════════════════════════════════
+    function renderSubCategories() {
+        const tbody = document.querySelector('#subcategory-table tbody');
+        tbody.innerHTML = '';
+        subcategories.forEach(s => {
+            const start  = s.startDate ? s.startDate.split('T')[0] : 'N/A';
+            const end    = s.endDate   ? s.endDate.split('T')[0]   : 'N/A';
+            const badge  = s.isActive
+                ? '<span class="badge-active">Active</span>'
+                : '<span class="badge-inactive">Inactive</span>';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="fw-semibold text-muted">#${s.subCategoryId}</td>
+                <td class="fw-medium text-dark">${s.subcategoryName}</td>
+                <td class="text-muted">${s.categoryName}</td>
+                <td class="text-muted">${s.seasonType || 'N/A'}</td>
+                <td class="text-muted" style="font-size:0.78rem;">${start} → ${end}</td>
+                <td>${badge}</td>
+                <td class="text-end pe-3">
+                    <button onclick="editSubCategory(${s.subCategoryId})" class="btn btn-sm btn-action me-1">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button onclick="deleteSubCategory(${s.subCategoryId})" class="btn btn-sm btn-action btn-action-danger">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function editSubCategory(id) {
+        const s = subcategories.find(x => x.subCategoryId === id);
+        if (!s) return;
+        document.getElementById('subcategory-id').value     = s.subCategoryId;
+        document.getElementById('subcategory-parent').value = s.categoryId || '';
+        document.getElementById('subcategory-name').value   = s.subcategoryName;
+        document.getElementById('subcategory-season').value = s.seasonType;
+        document.getElementById('subcategory-start').value  = s.startDate ? s.startDate.split('T')[0] : '';
+        document.getElementById('subcategory-end').value    = s.endDate   ? s.endDate.split('T')[0]   : '';
+        document.getElementById('subcategory-active').checked = s.isActive !== false;
+        const btn = document.getElementById('subcategory-submit');
+        btn.querySelector('span').textContent = 'Update Sub-Category';
+        btn.querySelector('i').className = 'fa-solid fa-check-circle';
+        clearSubCategoryErrors();
+    }
+
+    function clearSubCategoryErrors() {
+        ['subcategory-parent-error','subcategory-name-error','subcategory-season-error'].forEach(id => setError(id, false));
+        ['subcategory-parent','subcategory-name','subcategory-season'].forEach(id => setInputError(id, false));
+    }
+
+    function clearSubCategoryForm() {
+        document.getElementById('subcategory-id').value = '0';
+        document.getElementById('subcategory-form').reset();
+        document.getElementById('subcategory-active').checked = true;
+        const btn = document.getElementById('subcategory-submit');
+        btn.querySelector('span').textContent = 'Save Sub-Category';
+        btn.querySelector('i').className = 'fa-solid fa-link';
+        clearSubCategoryErrors();
+    }
+
+    async function saveSubCategory(event) {
+        event.preventDefault();
+        const id       = parseInt(document.getElementById('subcategory-id').value) || 0;
+        const parentId = parseInt(document.getElementById('subcategory-parent').value) || 0;
+        const name     = document.getElementById('subcategory-name').value.trim();
+        const season   = document.getElementById('subcategory-season').value.trim();
+
+        let hasError = false;
+        if (parentId <= 0) { setError('subcategory-parent-error', true); setInputError('subcategory-parent', true); hasError = true; }
+        else               { setError('subcategory-parent-error', false); setInputError('subcategory-parent', false); }
+        if (!name)         { setError('subcategory-name-error', true);   setInputError('subcategory-name', true);   hasError = true; }
+        else               { setError('subcategory-name-error', false);   setInputError('subcategory-name', false); }
+        if (!season)       { setError('subcategory-season-error', true); setInputError('subcategory-season', true); hasError = true; }
+        else               { setError('subcategory-season-error', false); setInputError('subcategory-season', false); }
+
+        if (hasError) return;
+
+        const btn = document.getElementById('subcategory-submit');
+        btn.disabled = true;
+        const result = await apiCall('/SubCategory/Save', 'POST', {
+            subCategoryId: id, categoryId: parentId, subcategoryName: name, seasonType: season,
+            startDate: document.getElementById('subcategory-start').value || null,
+            endDate:   document.getElementById('subcategory-end').value   || null,
+            isActive:  document.getElementById('subcategory-active').checked
+        });
+        btn.disabled = false;
+
+        if (result.success) {
+            showToast(id === 0 ? 'Sub-Category created successfully!' : 'Sub-Category updated successfully!');
+            clearSubCategoryForm();
+            await loadAllData();
+        } else {
+            showToast(result.message || 'Save failed.', 'error');
         }
+    }
 
-        function deleteCategory(id) {
-            triggerDeleteConfirmation("Are you sure you want to delete this Category? All linked Sub-Categories and Promotions will be permanently deleted.", async () => {
-                const result = await apiCall(`/Category/Delete/${id}`, "POST");
-                if (result.success) {
-                    showToast("Category deleted successfully!");
-                    clearCategoryForm();
-                    await loadAllData();
-                } else {
-                    showToast(result.message || "Delete failed.", "error");
-                }
-            });
-        }
-
-
-        // 2. RENDER & SAVE SUB-CATEGORY
-        function renderSubCategories() {
-            const tbody = document.querySelector("#subcategory-table tbody");
-            tbody.innerHTML = "";
-            subcategories.forEach(s => {
-                const tr = document.createElement("tr");
-                const start = s.startDate ? s.startDate : "N/A";
-                const end = s.endDate ? s.endDate : "N/A";
-                const statusHtml = s.isActive 
-                    ? `<span class="px-2 py-1 inline-flex text-xs font-semibold leading-5 rounded-full bg-green-100 text-green-800">Active</span>`
-                    : `<span class="px-2 py-1 inline-flex text-xs font-semibold leading-5 rounded-full bg-slate-100 text-slate-800">Inactive</span>`;
-                tr.innerHTML = `
-                    <td class="font-semibold text-slate-500">#${s.subCategoryId}</td>
-                    <td class="font-medium text-slate-800">${s.subcategoryName}</td>
-                    <td class="text-slate-600 font-medium">${s.categoryName}</td>
-                    <td class="text-slate-500">${s.seasonType || 'N/A'}</td>
-                    <td class="text-slate-500 text-xs">${start} to ${end}</td>
-                    <td>${statusHtml}</td>
-                    <td class="text-right px-4">
-                        <button onclick="editSubCategory(${s.subCategoryId})" class="text-slate-600 hover:text-slate-900 font-semibold text-xs mr-3"><i class="fas fa-edit"></i> Edit</button>
-                        <button onclick="deleteSubCategory(${s.subCategoryId})" class="text-rose-600 hover:text-rose-900 font-semibold text-xs"><i class="fas fa-trash-alt"></i> Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function editSubCategory(id) {
-            const s = subcategories.find(item => item.subCategoryId === id);
-            if (!s) return;
-            document.getElementById("subcategory-id").value = s.subCategoryId;
-            document.getElementById("subcategory-parent").value = s.categoryId || "";
-            document.getElementById("subcategory-name").value = s.subcategoryName;
-            document.getElementById("subcategory-season").value = s.seasonType;
-            if (s.startDate) {
-                 document.getElementById("subcategory-start").value = s.startDate.split('T')[0];
-            } else {
-                 document.getElementById("subcategory-start").value = "";
-            }
-
-            if (s.endDate) {
-                 document.getElementById("subcategory-end").value = s.endDate.split('T')[0];
-            } else {
-                 document.getElementById("subcategory-end").value = "";
-            }
-            document.getElementById("subcategory-active").checked = s.isActive !== false;
-            document.getElementById("subcategory-submit").querySelector("span").textContent = "Update Sub-Category";
-            document.getElementById("subcategory-submit").querySelector("i").className = "fas fa-check-circle";
-
-            // Clear errors
-            document.getElementById("subcategory-parent-error").classList.add("hidden");
-            document.getElementById("subcategory-parent").classList.remove("border-rose-500");
-            document.getElementById("subcategory-name-error").classList.add("hidden");
-            document.getElementById("subcategory-name").classList.remove("border-rose-500");
-            document.getElementById("subcategory-season-error").classList.add("hidden");
-            document.getElementById("subcategory-season").classList.remove("border-rose-500");
-        }
-
-        function clearSubCategoryForm() {
-            document.getElementById("subcategory-id").value = "0";
-            document.getElementById("subcategory-form").reset();
-            document.getElementById("subcategory-active").checked = true;
-            document.getElementById("subcategory-submit").querySelector("span").textContent = "Save Sub-Category";
-            document.getElementById("subcategory-submit").querySelector("i").className = "fas fa-link";
-
-            // Clear errors
-            document.getElementById("subcategory-parent-error").classList.add("hidden");
-            document.getElementById("subcategory-parent").classList.remove("border-rose-500");
-            document.getElementById("subcategory-name-error").classList.add("hidden");
-            document.getElementById("subcategory-name").classList.remove("border-rose-500");
-            document.getElementById("subcategory-season-error").classList.add("hidden");
-            document.getElementById("subcategory-season").classList.remove("border-rose-500");
-        }
-
-        async function saveSubCategory(event) {
-            event.preventDefault();
-            const id = parseInt(document.getElementById("subcategory-id").value) || 0;
-            const parentId = parseInt(document.getElementById("subcategory-parent").value) || 0;
-            const name = document.getElementById("subcategory-name").value.trim();
-            const season = document.getElementById("subcategory-season").value.trim();
-            const start = document.getElementById("subcategory-start").value;
-            const end = document.getElementById("subcategory-end").value;
-            const active = document.getElementById("subcategory-active").checked;
-
-            let hasError = false;
-            if (parentId <= 0) {
-                document.getElementById("subcategory-parent-error").classList.remove("hidden");
-                document.getElementById("subcategory-parent").classList.add("border-rose-500");
-                hasError = true;
-            } else {
-                document.getElementById("subcategory-parent-error").classList.add("hidden");
-                document.getElementById("subcategory-parent").classList.remove("border-rose-500");
-            }
-
-            if (!name) {
-                document.getElementById("subcategory-name-error").classList.remove("hidden");
-                document.getElementById("subcategory-name").classList.add("border-rose-500");
-                hasError = true;
-            } else {
-                document.getElementById("subcategory-name-error").classList.add("hidden");
-                document.getElementById("subcategory-name").classList.remove("border-rose-500");
-            }
-
-            if (!season) {
-                document.getElementById("subcategory-season-error").classList.remove("hidden");
-                document.getElementById("subcategory-season").classList.add("border-rose-500");
-                hasError = true;
-            } else {
-                document.getElementById("subcategory-season-error").classList.add("hidden");
-                document.getElementById("subcategory-season").classList.remove("border-rose-500");
-            }
-
-            if (hasError) return;
-
-            const submitBtn = document.getElementById("subcategory-submit");
-            submitBtn.disabled = true;
-            submitBtn.classList.add("opacity-50", "cursor-not-allowed");
-
-            const result = await apiCall("/SubCategory/Save", "POST", {
-                subCategoryId: id,
-                categoryId: parentId,
-                subcategoryName: name,
-                seasonType: season,
-                startDate: start ? start : null,
-                endDate: end ? end : null,
-                isActive: active
-            });
-
-            submitBtn.disabled = false;
-            submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
-
+    function deleteSubCategory(id) {
+        triggerDeleteConfirmation('Are you sure you want to delete this Sub-Category? All linked Promotions will be removed.', async () => {
+            const result = await apiCall(`/SubCategory/Delete/${id}`, 'POST');
             if (result.success) {
-                showToast(id === 0 ? "Sub-Category created successfully!" : "Sub-Category updated successfully!");
+                showToast('Sub-Category deleted successfully!');
                 clearSubCategoryForm();
                 await loadAllData();
             } else {
-                showToast(result.message || "Save failed.", "error");
+                showToast(result.message || 'Delete failed.', 'error');
             }
+        });
+    }
+
+    // ════════════════════════════════════════════════════
+    // 3. PROMOTION
+    // ════════════════════════════════════════════════════
+    function renderPromotions() {
+        const tbody = document.querySelector('#promotion-table tbody');
+        tbody.innerHTML = '';
+        promotions.forEach(p => {
+            const start = p.startDate ? p.startDate.split('T')[0] : 'N/A';
+            const end   = p.endDate   ? p.endDate.split('T')[0]   : 'N/A';
+            const badge = p.isActive
+                ? '<span class="badge-active">Active</span>'
+                : '<span class="badge-inactive">Inactive</span>';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="fw-medium">${p.subcategoryName}</td>
+                <td class="fw-medium text-dark">${p.discountName}</td>
+                <td><span class="fw-semibold">${p.promotionDiscount || '0%'}</span>
+                    <span class="text-muted" style="font-size:0.75rem;"> (${p.discountType || 'General'})</span></td>
+                <td class="text-muted" style="font-size:0.78rem;">${start} → ${end}</td>
+                <td>${badge}</td>
+                <td class="text-end pe-3">
+                    <button onclick="editPromotion(${p.promotionId})" class="btn btn-sm btn-action me-1">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button onclick="deletePromotion(${p.promotionId})" class="btn btn-sm btn-action btn-action-danger">
+                        <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function editPromotion(id) {
+        const p = promotions.find(x => x.promotionId === id);
+        if (!p) return;
+        document.getElementById('promotion-id').value       = p.promotionId;
+        document.getElementById('promotion-sub').value      = p.subCategoryId || '';
+        document.getElementById('promotion-discount').value = p.promotionDiscount || '';
+        document.getElementById('promotion-name').value     = p.discountName || '';
+        document.getElementById('promotion-type').value     = p.discountType || '';
+        document.getElementById('promotion-start').value    = p.startDate ? p.startDate.split('T')[0] : '';
+        document.getElementById('promotion-end').value      = p.endDate   ? p.endDate.split('T')[0]   : '';
+        document.getElementById('promotion-active').checked = p.isActive !== false;
+        const btn = document.getElementById('promotion-submit');
+        btn.querySelector('span').textContent = 'Update Promotion';
+        btn.querySelector('i').className = 'fa-solid fa-check-circle';
+    }
+
+    function clearPromotionForm() {
+        document.getElementById('promotion-id').value = '0';
+        document.getElementById('promotion-form').reset();
+        document.getElementById('promotion-active').checked = true;
+        const btn = document.getElementById('promotion-submit');
+        btn.querySelector('span').textContent = 'Save Promotion Rule';
+        btn.querySelector('i').className = 'fa-solid fa-bolt';
+        setError('promotion-sub-error', false);  setInputError('promotion-sub', false);
+        setError('promotion-name-error', false); setInputError('promotion-name', false);
+    }
+
+    async function savePromotion(event) {
+        event.preventDefault();
+        const id    = parseInt(document.getElementById('promotion-id').value) || 0;
+        const subId = parseInt(document.getElementById('promotion-sub').value) || 0;
+        const name  = document.getElementById('promotion-name').value.trim();
+
+        let hasError = false;
+        if (subId <= 0) { setError('promotion-sub-error', true);  setInputError('promotion-sub', true);  hasError = true; }
+        else            { setError('promotion-sub-error', false); setInputError('promotion-sub', false); }
+        if (!name)      { setError('promotion-name-error', true); setInputError('promotion-name', true); hasError = true; }
+        else            { setError('promotion-name-error', false); setInputError('promotion-name', false); }
+        if (hasError) return;
+
+        const btn = document.getElementById('promotion-submit');
+        btn.disabled = true;
+        const result = await apiCall('/Promotion/Save', 'POST', {
+            promotionId: id, subCategoryId: subId,
+            promotionDiscount: document.getElementById('promotion-discount').value.trim(),
+            discountName: name,
+            discountType: document.getElementById('promotion-type').value.trim(),
+            startDate: document.getElementById('promotion-start').value || null,
+            endDate:   document.getElementById('promotion-end').value   || null,
+            isActive:  document.getElementById('promotion-active').checked
+        });
+        btn.disabled = false;
+
+        if (result.success) {
+            showToast(id === 0 ? 'Promotion created successfully!' : 'Promotion updated successfully!');
+            clearPromotionForm();
+            await loadAllData();
+        } else {
+            showToast(result.message || 'Save failed.', 'error');
         }
+    }
 
-        function deleteSubCategory(id) {
-            triggerDeleteConfirmation("Are you sure you want to delete this Sub-Category? All linked Promotions will be permanently deleted.", async () => {
-                const result = await apiCall(`/SubCategory/Delete/${id}`, "POST");
-                if (result.success) {
-                    showToast("Sub-Category deleted successfully!");
-                    clearSubCategoryForm();
-                    await loadAllData();
-                } else {
-                    showToast(result.message || "Delete failed.", "error");
-                }
-            });
+    function deletePromotion(id) {
+        triggerDeleteConfirmation('Are you sure you want to delete this Promotion rule?', async () => {
+            const result = await apiCall(`/Promotion/Delete/${id}`, 'POST');
+            if (result.success) { showToast('Promotion deleted successfully!'); clearPromotionForm(); await loadAllData(); }
+            else showToast(result.message || 'Delete failed.', 'error');
+        });
+    }
+
+    // ════════════════════════════════════════════════════
+    // 4a. COLOR
+    // ════════════════════════════════════════════════════
+    function renderColors() {
+        const tbody = document.querySelector('#color-table tbody');
+        tbody.innerHTML = '';
+        colors.forEach(c => {
+            const hex = c.hexCode && c.hexCode.startsWith('#') ? c.hexCode : '#FFFFFF';
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="fw-semibold text-muted">#${c.colorId}</td>
+                <td class="fw-medium d-flex align-items-center gap-2">
+                    <span style="width:12px;height:12px;border-radius:50%;background:${hex};border:1px solid #e2e8f0;display:inline-block;"></span>
+                    ${c.colorName}
+                </td>
+                <td class="text-muted font-monospace">${c.hexCode || 'N/A'}</td>
+                <td class="text-end pe-2">
+                    <button onclick="editColor(${c.colorId})" class="btn btn-sm btn-action me-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button onclick="deleteColor(${c.colorId})" class="btn btn-sm btn-action btn-action-danger"><i class="fa-solid fa-trash-can"></i></button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function editColor(id) {
+        const c = colors.find(x => x.colorId === id);
+        if (!c) return;
+        document.getElementById('color-id').value   = c.colorId;
+        document.getElementById('color-name').value = c.colorName;
+        document.getElementById('color-hex').value  = c.hexCode || '';
+        updateColorPreview(c.hexCode || '');
+        document.getElementById('color-submit').textContent = 'Update Color';
+        setError('color-name-error', false); setInputError('color-name', false);
+    }
+
+    function clearColorForm() {
+        document.getElementById('color-id').value = '0';
+        document.getElementById('color-form').reset();
+        updateColorPreview('');
+        document.getElementById('color-submit').textContent = 'Save Color';
+        setError('color-name-error', false); setInputError('color-name', false);
+    }
+
+    async function saveColor(event) {
+        event.preventDefault();
+        const id   = parseInt(document.getElementById('color-id').value) || 0;
+        const name = document.getElementById('color-name').value.trim();
+        const hex  = document.getElementById('color-hex').value.trim();
+
+        if (!name) { setError('color-name-error', true); setInputError('color-name', true); return; }
+        setError('color-name-error', false); setInputError('color-name', false);
+
+        const btn = document.getElementById('color-submit');
+        btn.disabled = true;
+        const result = await apiCall('/Color/Save', 'POST', { colorId: id, colorName: name, hexCode: hex });
+        btn.disabled = false;
+
+        if (result.success) {
+            showToast(id === 0 ? 'Color registered successfully!' : 'Color updated successfully!');
+            clearColorForm();
+            await loadAllData();
+        } else {
+            showToast(result.message || 'Save failed.', 'error');
         }
+    }
 
+    function deleteColor(id) {
+        triggerDeleteConfirmation('Are you sure you want to delete this Color?', async () => {
+            const result = await apiCall(`/Color/Delete/${id}`, 'POST');
+            if (result.success) { showToast('Color deleted successfully!'); clearColorForm(); await loadAllData(); }
+            else showToast(result.message || 'Delete failed.', 'error');
+        });
+    }
 
-        // 3. RENDER & SAVE PROMOTION RULE
-        function renderPromotions() {
-            const tbody = document.querySelector("#promotion-table tbody");
-            tbody.innerHTML = "";
-            promotions.forEach(p => {
-                const tr = document.createElement("tr");
-                const start = p.startDate ? p.startDate : "N/A";
-                const end = p.endDate ? p.endDate : "N/A";
-                const statusHtml = p.isActive 
-                    ? `<span class="px-2 py-1 inline-flex text-xs font-semibold leading-5 rounded-full bg-green-100 text-green-800">Active</span>`
-                    : `<span class="px-2 py-1 inline-flex text-xs font-semibold leading-5 rounded-full bg-slate-100 text-slate-800">Inactive</span>`;
-                tr.innerHTML = `
-                    <td class="font-semibold text-slate-800">${p.subcategoryName}</td>
-                    <td class="font-medium text-slate-900">${p.discountName}</td>
-                    <td>
-                        <span class="text-slate-800 font-semibold">${p.promotionDiscount || '0%'}</span>
-                        <span class="text-slate-400 text-xs">(${p.discountType || 'General'})</span>
-                    </td>
-                    <td class="text-slate-500 text-xs">${start} to ${end}</td>
-                    <td>${statusHtml}</td>
-                    <td class="text-right px-4">
-                        <button onclick="editPromotion(${p.promotionId})" class="text-slate-600 hover:text-slate-900 font-semibold text-xs mr-3"><i class="fas fa-edit"></i> Edit</button>
-                        <button onclick="deletePromotion(${p.promotionId})" class="text-rose-600 hover:text-rose-900 font-semibold text-xs"><i class="fas fa-trash-alt"></i> Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+    // ════════════════════════════════════════════════════
+    // 4b. SIZE
+    // ════════════════════════════════════════════════════
+    function renderSizes() {
+        const tbody = document.querySelector('#size-table tbody');
+        tbody.innerHTML = '';
+        sizes.forEach(s => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="fw-semibold text-muted">#${s.sizeId}</td>
+                <td class="fw-medium">${s.sizeName}</td>
+                <td class="text-end pe-2">
+                    <button onclick="editSize(${s.sizeId})" class="btn btn-sm btn-action me-1"><i class="fa-solid fa-pen-to-square"></i></button>
+                    <button onclick="deleteSize(${s.sizeId})" class="btn btn-sm btn-action btn-action-danger"><i class="fa-solid fa-trash-can"></i></button>
+                </td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function editSize(id) {
+        const s = sizes.find(x => x.sizeId === id);
+        if (!s) return;
+        document.getElementById('size-id').value   = s.sizeId;
+        document.getElementById('size-name').value = s.sizeName;
+        document.getElementById('size-submit').textContent = 'Update Size';
+        setError('size-name-error', false); setInputError('size-name', false);
+    }
+
+    function clearSizeForm() {
+        document.getElementById('size-id').value = '0';
+        document.getElementById('size-form').reset();
+        document.getElementById('size-submit').textContent = 'Save Size';
+        setError('size-name-error', false); setInputError('size-name', false);
+    }
+
+    async function saveSize(event) {
+        event.preventDefault();
+        const id   = parseInt(document.getElementById('size-id').value) || 0;
+        const name = document.getElementById('size-name').value.trim();
+
+        if (!name) { setError('size-name-error', true); setInputError('size-name', true); return; }
+        setError('size-name-error', false); setInputError('size-name', false);
+
+        const btn = document.getElementById('size-submit');
+        btn.disabled = true;
+        const result = await apiCall('/Size/Save', 'POST', { sizeId: id, sizeName: name });
+        btn.disabled = false;
+
+        if (result.success) {
+            showToast(id === 0 ? 'Size registered successfully!' : 'Size updated successfully!');
+            clearSizeForm();
+            await loadAllData();
+        } else {
+            showToast(result.message || 'Save failed.', 'error');
         }
+    }
 
-        function editPromotion(id) {
-            const p = promotions.find(item => item.promotionId === id);
-            if (!p) return;
-            document.getElementById("promotion-id").value = p.promotionId;
-            document.getElementById("promotion-sub").value = p.subCategoryId || "";
-            document.getElementById("promotion-discount").value = p.promotionDiscount || "";
-            document.getElementById("promotion-name").value = p.discountName || "";
-            document.getElementById("promotion-type").value = p.discountType || "";
-            document.getElementById("promotion-start").value = p.startDate || "";
-            document.getElementById("promotion-end").value = p.endDate || "";
-            document.getElementById("promotion-active").checked = p.isActive !== false;
-            document.getElementById("promotion-submit").querySelector("span").textContent = "Update Promotion";
-            document.getElementById("promotion-submit").querySelector("i").className = "fas fa-check-circle";
-
-            // Clear errors
-            document.getElementById("promotion-sub-error").classList.add("hidden");
-            document.getElementById("promotion-sub").classList.remove("border-rose-500");
-            document.getElementById("promotion-name-error").classList.add("hidden");
-            document.getElementById("promotion-name").classList.remove("border-rose-500");
-        }
-
-        function clearPromotionForm() {
-            document.getElementById("promotion-id").value = "0";
-            document.getElementById("promotion-form").reset();
-            document.getElementById("promotion-active").checked = true;
-            document.getElementById("promotion-submit").querySelector("span").textContent = "Save Promotion Rule";
-            document.getElementById("promotion-submit").querySelector("i").className = "fas fa-bolt";
-
-            // Clear errors
-            document.getElementById("promotion-sub-error").classList.add("hidden");
-            document.getElementById("promotion-sub").classList.remove("border-rose-500");
-            document.getElementById("promotion-name-error").classList.add("hidden");
-            document.getElementById("promotion-name").classList.remove("border-rose-500");
-        }
-
-        async function savePromotion(event) {
-            event.preventDefault();
-            const id = parseInt(document.getElementById("promotion-id").value) || 0;
-            const subId = parseInt(document.getElementById("promotion-sub").value) || 0;
-            const discount = document.getElementById("promotion-discount").value.trim();
-            const name = document.getElementById("promotion-name").value.trim();
-            const type = document.getElementById("promotion-type").value.trim();
-            const start = document.getElementById("promotion-start").value;
-            const end = document.getElementById("promotion-end").value;
-            const active = document.getElementById("promotion-active").checked;
-
-            let hasError = false;
-            if (subId <= 0) {
-                document.getElementById("promotion-sub-error").classList.remove("hidden");
-                document.getElementById("promotion-sub").classList.add("border-rose-500");
-                hasError = true;
-            } else {
-                document.getElementById("promotion-sub-error").classList.add("hidden");
-                document.getElementById("promotion-sub").classList.remove("border-rose-500");
-            }
-
-            if (!name) {
-                document.getElementById("promotion-name-error").classList.remove("hidden");
-                document.getElementById("promotion-name").classList.add("border-rose-500");
-                hasError = true;
-            } else {
-                document.getElementById("promotion-name-error").classList.add("hidden");
-                document.getElementById("promotion-name").classList.remove("border-rose-500");
-            }
-
-            if (hasError) return;
-
-            const submitBtn = document.getElementById("promotion-submit");
-            submitBtn.disabled = true;
-            submitBtn.classList.add("opacity-50", "cursor-not-allowed");
-
-            const result = await apiCall("/Promotion/Save", "POST", {
-                promotionId: id,
-                subCategoryId: subId,
-                promotionDiscount: discount,
-                discountName: name,
-                discountType: type,
-                startDate: start ? start : null,
-                endDate: end ? end : null,
-                isActive: active
-            });
-
-            submitBtn.disabled = false;
-            submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
-
-            if (result.success) {
-                showToast(id === 0 ? "Promotion created successfully!" : "Promotion updated successfully!");
-                clearPromotionForm();
-                await loadAllData();
-            } else {
-                showToast(result.message || "Save failed.", "error");
-            }
-        }
-
-        function deletePromotion(id) {
-            triggerDeleteConfirmation("Are you sure you want to delete this Promotion rule?", async () => {
-                const result = await apiCall(`/Promotion/Delete/${id}`, "POST");
-                if (result.success) {
-                    showToast("Promotion deleted successfully!");
-                    clearPromotionForm();
-                    await loadAllData();
-                } else {
-                    showToast(result.message || "Delete failed.", "error");
-                }
-            });
-        }
-
-
-        // 4a. RENDER & SAVE COLOR
-        function renderColors() {
-            const tbody = document.querySelector("#color-table tbody");
-            tbody.innerHTML = "";
-            colors.forEach(c => {
-                const tr = document.createElement("tr");
-                const hexColor = c.hexCode && c.hexCode.startsWith("#") ? c.hexCode : "#FFFFFF";
-                tr.innerHTML = `
-                    <td class="font-semibold text-slate-500">#${c.colorId}</td>
-                    <td class="font-medium text-slate-800 flex items-center gap-1.5">
-                        <span class="inline-block w-3 h-3 rounded-full border border-slate-200" style="background-color: ${hexColor}"></span>
-                        <span>${c.colorName}</span>
-                    </td>
-                    <td class="text-slate-500">${c.hexCode || 'N/A'}</td>
-                    <td class="text-right px-2">
-                        <button onclick="editColor(${c.colorId})" class="text-slate-600 hover:text-slate-900 font-semibold text-[11px] mr-2"><i class="fas fa-edit"></i> Edit</button>
-                        <button onclick="deleteColor(${c.colorId})" class="text-rose-600 hover:text-rose-900 font-semibold text-[11px]"><i class="fas fa-trash-alt"></i> Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function editColor(id) {
-            const c = colors.find(item => item.colorId === id);
-            if (!c) return;
-            document.getElementById("color-id").value = c.colorId;
-            document.getElementById("color-name").value = c.colorName;
-            document.getElementById("color-hex").value = c.hexCode || "";
-            updateColorPreview(c.hexCode || "");
-            document.getElementById("color-submit").textContent = "Update Color";
-
-            // Clear errors
-            document.getElementById("color-name-error").classList.add("hidden");
-            document.getElementById("color-name").classList.remove("border-rose-500");
-        }
-
-        function clearColorForm() {
-            document.getElementById("color-id").value = "0";
-            document.getElementById("color-form").reset();
-            updateColorPreview("");
-            document.getElementById("color-submit").textContent = "Save Color";
-
-            // Clear errors
-            document.getElementById("color-name-error").classList.add("hidden");
-            document.getElementById("color-name").classList.remove("border-rose-500");
-        }
-
-        async function saveColor(event) {
-            event.preventDefault();
-            const id = parseInt(document.getElementById("color-id").value) || 0;
-            const name = document.getElementById("color-name").value.trim();
-            const hex = document.getElementById("color-hex").value.trim();
-
-            let hasError = false;
-            if (!name) {
-                document.getElementById("color-name-error").classList.remove("hidden");
-                document.getElementById("color-name").classList.add("border-rose-500");
-                hasError = true;
-            } else {
-                document.getElementById("color-name-error").classList.add("hidden");
-                document.getElementById("color-name").classList.remove("border-rose-500");
-            }
-
-            if (hasError) return;
-
-            const submitBtn = document.getElementById("color-submit");
-            submitBtn.disabled = true;
-            submitBtn.classList.add("opacity-50", "cursor-not-allowed");
-
-            const result = await apiCall("/Color/Save", "POST", {
-                colorId: id,
-                colorName: name,
-                hexCode: hex
-            });
-
-            submitBtn.disabled = false;
-            submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
-
-            if (result.success) {
-                showToast(id === 0 ? "Color registered successfully!" : "Color updated successfully!");
-                clearColorForm();
-                await loadAllData();
-            } else {
-                showToast(result.message || "Save failed.", "error");
-            }
-        }
-
-        function deleteColor(id) {
-            triggerDeleteConfirmation("Are you sure you want to delete this Color?", async () => {
-                const result = await apiCall(`/Color/Delete/${id}`, "POST");
-                if (result.success) {
-                    showToast("Color deleted successfully!");
-                    clearColorForm();
-                    await loadAllData();
-                } else {
-                    showToast(result.message || "Delete failed.", "error");
-                }
-            });
-        }
-
-
-        // 4b. RENDER & SAVE SIZE
-        function renderSizes() {
-            const tbody = document.querySelector("#size-table tbody");
-            tbody.innerHTML = "";
-            sizes.forEach(s => {
-                const tr = document.createElement("tr");
-                tr.innerHTML = `
-                    <td class="font-semibold text-slate-500">#${s.sizeId}</td>
-                    <td class="font-medium text-slate-800">${s.sizeName}</td>
-                    <td class="text-right px-2">
-                        <button onclick="editSize(${s.sizeId})" class="text-slate-600 hover:text-slate-900 font-semibold text-[11px] mr-2"><i class="fas fa-edit"></i> Edit</button>
-                        <button onclick="deleteSize(${s.sizeId})" class="text-rose-600 hover:text-rose-900 font-semibold text-[11px]"><i class="fas fa-trash-alt"></i> Delete</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function editSize(id) {
-            const s = sizes.find(item => item.sizeId === id);
-            if (!s) return;
-            document.getElementById("size-id").value = s.sizeId;
-            document.getElementById("size-name").value = s.sizeName;
-            document.getElementById("size-submit").textContent = "Update Size";
-
-            // Clear errors
-            document.getElementById("size-name-error").classList.add("hidden");
-            document.getElementById("size-name").classList.remove("border-rose-500");
-        }
-
-        function clearSizeForm() {
-            document.getElementById("size-id").value = "0";
-            document.getElementById("size-form").reset();
-            document.getElementById("size-submit").textContent = "Save Size";
-
-            // Clear errors
-            document.getElementById("size-name-error").classList.add("hidden");
-            document.getElementById("size-name").classList.remove("border-rose-500");
-        }
-
-        async function saveSize(event) {
-            event.preventDefault();
-            const id = parseInt(document.getElementById("size-id").value) || 0;
-            const name = document.getElementById("size-name").value.trim();
-
-            let hasError = false;
-            if (!name) {
-                document.getElementById("size-name-error").classList.remove("hidden");
-                document.getElementById("size-name").classList.add("border-rose-500");
-                hasError = true;
-            } else {
-                document.getElementById("size-name-error").classList.add("hidden");
-                document.getElementById("size-name").classList.remove("border-rose-500");
-            }
-
-            if (hasError) return;
-
-            const submitBtn = document.getElementById("size-submit");
-            submitBtn.disabled = true;
-            submitBtn.classList.add("opacity-50", "cursor-not-allowed");
-
-            const result = await apiCall("/Size/Save", "POST", {
-                sizeId: id,
-                sizeName: name
-            });
-
-            submitBtn.disabled = false;
-            submitBtn.classList.remove("opacity-50", "cursor-not-allowed");
-
-            if (result.success) {
-                showToast(id === 0 ? "Size registered successfully!" : "Size updated successfully!");
-                clearSizeForm();
-                await loadAllData();
-            } else {
-                showToast(result.message || "Save failed.", "error");
-            }
-        }
-
-        function deleteSize(id) {
-            triggerDeleteConfirmation("Are you sure you want to delete this Size?", async () => {
-                const result = await apiCall(`/Size/Delete/${id}`, "POST");
-                if (result.success) {
-                    showToast("Size deleted successfully!");
-                    clearSizeForm();
-                    await loadAllData();
-                } else {
-                    showToast(result.message || "Delete failed.", "error");
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+    function deleteSize(id) {
+        triggerDeleteConfirmation('Are you sure you want to delete this Size?', async () => {
+            const result = await apiCall(`/Size/Delete/${id}`, 'POST');
+            if (result.success) { showToast('Size deleted successfully!'); clearSizeForm(); await loadAllData(); }
+            else showToast(result.message || 'Delete failed.', 'error');
+        });
+    }
+</script>
+}

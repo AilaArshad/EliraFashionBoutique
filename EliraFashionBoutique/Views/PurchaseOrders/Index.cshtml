@@ -1,259 +1,222 @@
 @{
-    Layout = null;
+    ViewData["Title"] = "Purchase Orders";
+    Layout = "_Layout";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elira Fashion Boutique - Purchase Orders</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --body-bg: #f8fafc;
-            --btn-dark-navy: #1b223c;
-            --btn-dark-navy-hover: #12182c;
-        }
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--body-bg);
-            color: var(--text-dark);
-            overflow-x: hidden;
-        }
-        
-        .main-content {
-            padding: 2rem;
-            width: 100%;
-            flex-grow: 1;
-            min-width: 0;
-        }
-        
-        .content-card {
-            background: #fff;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            margin-bottom: 24px;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        }
-        .card-title-bar {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-color);
-            background-color: #fff;
-            font-weight: 600;
-        }
 
-        .btn-custom-dark {
-            background-color: var(--btn-dark-navy);
-            color: #ffffff;
-            border: 1px solid var(--btn-dark-navy);
-        }
-        .btn-custom-dark:hover, .btn-custom-dark:focus {
-            background-color: var(--btn-dark-navy-hover);
-            color: #ffffff;
-            border-color: var(--btn-dark-navy-hover);
-        }
+@section Styles {
+<style>
+    .col-w-subcat  { min-width: 220px !important; }
+    .col-w-prod    { min-width: 220px !important; }
+    .col-w-sku     { min-width: 300px !important; }
+    .col-w-qty     { min-width: 90px !important; width: 90px; }
+    .col-w-cost    { min-width: 130px !important; width: 130px; }
+    .col-w-subtotal{ min-width: 150px !important; width: 150px; }
 
-        .header-container {
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
+    .table-form-input {
+        font-size: 0.82rem !important;
+        padding: 7px 22px 7px 10px !important;
+        height: 38px;
+        background-position: right 8px center !important;
+        background-size: 12px !important;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-        .table-responsive {
-            overflow-x: auto;
-            -webkit-overflow-scrolling: touch;
-            width: 100%;
-        }
-        
-        .table th {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--text-muted);
-            background-color: #f8fafc;
-            border-bottom: 1px solid var(--border-color);
-            vertical-align: middle;
-        }
-        .table td {
-            padding: 12px 10px;
-            font-size: 0.85rem;
-            color: #334155;
-            vertical-align: middle;
-        }
+    .status-approved { background-color: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+    .status-pending  { background-color: #fefce8; color: #854d0e; border-color: #fef08a; }
+    .status-dropdown {
+        font-size: 0.72rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        border: 1px solid transparent;
+    }
 
-        .col-w-subcat { min-width: 220px !important; }
-        .col-w-prod { min-width: 220px !important; }
-        .col-w-sku { min-width: 300px !important; }
-        .col-w-qty { min-width: 90px !important; width: 90px; }
-        .col-w-cost { min-width: 130px !important; width: 130px; }
-        .col-w-subtotal { min-width: 150px !important; width: 150px; }
+    .supplier-row { cursor: pointer; transition: background 0.12s; }
+    .supplier-row:hover td { background-color: #f8fafc; }
+    tr.active-row td {
+        background-color: #f1f5f9 !important;
+        border-left: 3px solid var(--elira-accent);
+    }
 
-        tr.active-row {
-            background-color: #f1f5f9 !important;
-            border-left: 4px solid #3b82f6;
-        }
+    .indicator-dot {
+        width: 8px; height: 8px;
+        background: var(--elira-accent);
+        border-radius: 50%;
+        display: inline-block;
+    }
 
-        .status-dropdown {
-            font-size: 0.75rem;
-            font-weight: 600;
-            padding: 6px 12px;
-            border-radius: 6px;
-            border: 1px solid transparent;
-        }
-        .status-approved { background-color: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
-        .status-pending { background-color: #fefce8; color: #854d0e; border-color: #fef08a; }
+    /* Order card */
+    .order-card {
+        background: #fff;
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow-xs);
+        transition: box-shadow 0.15s;
+    }
+    .order-card:hover { box-shadow: var(--shadow-sm); }
+</style>
+}
 
-        .indicator-dot {
-            width: 10px;
-            height: 10px;
-            background-color: #3b82f6;
-            border-radius: 50%;
-            display: inline-block;
-        }
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Purchase Order Management</h1>
+        <p class="page-subtitle">Manage production orders, supplier manifests, and inventory provisions.</p>
+    </div>
+    <button class="btn btn-elira-dark btn-sm px-3 py-2" type="button" id="toggleCollapseFormBtn">
+        <i class="fa-solid fa-plus me-1"></i> Create New Purchase Order
+    </button>
+</div>
 
-        .table-form-input {
-            font-size: 0.85rem !important;
-            padding: 8px 24px 8px 12px !important;
-            height: 40px;
-            background-position: right 8px center !important;
-            background-size: 12px !important;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-    </style>
-</head>
-<body>
+<!-- ── CREATE / EDIT FORM PANEL ── -->
+<div class="collapse mb-4" id="newOrderCollapseForm">
+    <div class="content-card border-primary">
+        <div class="card-title-bar d-flex justify-content-between align-items-center" style="background:#f8fafc;">
+            <span id="formPanelTitle" class="text-secondary small text-uppercase fw-semibold">
+                New Purchase Order Dialog
+            </span>
+            <button type="button" class="btn-close btn-sm" id="cancelFormBtn" style="font-size:0.75rem;"></button>
+        </div>
+        <div class="card-body">
+            <form id="purchaseOrderForm">
+                <input type="hidden" id="editingOrderId" value="">
 
-    <div class="d-flex w-100 align-items-stretch">
-        
-        <div class="main-content">
-            
-            <div class="d-flex justify-content-between align-items-center header-container mb-4">
-                <div>
-                    <h4 class="fw-bold m-0">Purchase Order Management</h4>
-                    <p class="text-muted small m-0 mt-1">Manage production variants hierarchy structures seamlessly.</p>
+                <div class="row g-3 mb-4">
+                    <div class="col-sm-6 col-md-3">
+                        <label class="form-label small fw-semibold">Select Category</label>
+                        <select id="formCategorySelect" class="form-select form-select-sm table-form-input">
+                            @if (ViewBag.Categories != null)
+                            {
+                                foreach (var cat in (IEnumerable<EliraFashionBoutique.Models.Category>)ViewBag.Categories)
+                                {
+                                    <option value="@cat.CategoryId">@cat.CategoryName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label class="form-label small fw-semibold">Select Supplier</label>
+                        <select id="formSupplierSelect" class="form-select form-select-sm table-form-input">
+                            @if (ViewBag.Suppliers != null)
+                            {
+                                foreach (var sup in (IEnumerable<EliraFashionBoutique.Models.Supplier>)ViewBag.Suppliers)
+                                {
+                                    <option value="@sup.SupplierId">@sup.SupplierName</option>
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label class="form-label small fw-semibold">Expected Delivery Date</label>
+                        <input type="date" id="formDeliveryDate" class="form-control form-control-sm table-form-input" value="2026-06-25">
+                    </div>
+                    <div class="col-sm-6 col-md-3">
+                        <label class="form-label small fw-semibold">Initial Order Status</label>
+                        <select id="formOrderStatus" class="form-select form-select-sm table-form-input">
+                            <option value="Pending Audit">Pending Audit</option>
+                            <option value="Approved">Approved</option>
+                        </select>
+                    </div>
                 </div>
-                <button class="btn btn-custom-dark btn-sm px-3 py-2 fw-medium" type="button" id="toggleCollapseFormBtn">
-                    <i class="fa-solid fa-plus me-1"></i> Create New Purchase Order
-                </button>
+
+                <div class="border-top pt-3">
+                    <h6 class="fw-bold text-secondary small text-uppercase mb-3">
+                        <i class="fa-solid fa-list-check me-1"></i> Order Items Manifest
+                    </h6>
+                    <div class="table-responsive shadow-sm border rounded-3">
+                        <table class="table table-bordered table-sm m-0 align-middle elira-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-w-subcat">Sub Category</th>
+                                    <th class="col-w-prod">Product Name</th>
+                                    <th class="col-w-sku">Variant SKU Lookup</th>
+                                    <th class="col-w-qty">Qty</th>
+                                    <th class="col-w-cost">Unit Cost (PKR)</th>
+                                    <th class="col-w-subtotal">Subtotal</th>
+                                    <th style="width:50px;" class="text-center">Del</th>
+                                </tr>
+                            </thead>
+                            <tbody id="draftManifestItemsBody">
+                                <tr id="emptyRowPlaceholder">
+                                    <td colspan="7" class="text-center text-muted py-4 small">
+                                        <i class="fa-solid fa-inbox me-2"></i>No items added yet. Click the button below to append rows.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-3">
+                        <button type="button" id="appendVariantRowBtn" class="btn btn-outline-primary btn-sm fw-medium px-3 py-2">
+                            <i class="fa-solid fa-square-plus me-1"></i> Add Variant Item Row
+                        </button>
+                    </div>
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                    <button type="button" class="btn btn-sm btn-light border px-3" id="cancelFormBtnBottom">Cancel</button>
+                    <button type="button" id="savePurchaseOrderBtn" class="btn btn-sm btn-elira-dark px-4">
+                        <i class="fa-solid fa-floppy-disk me-1"></i> Commit &amp; Save Order
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── MASTER-DETAIL LAYOUT ── -->
+<div class="row g-4">
+
+    <!-- Left: Suppliers -->
+    <div class="col-lg-5">
+        <div class="content-card h-100">
+            <div class="card-title-bar d-flex align-items-center justify-content-between">
+                <span><i class="fa-solid fa-building me-2 text-secondary"></i>Active Suppliers</span>
+                <span class="live-dot"></span>
             </div>
-
-            <div class="collapse mb-4" id="newOrderCollapseForm">
-                <div class="content-card border-primary">
-                    <div class="card-title-bar bg-light text-secondary small d-flex justify-content-between align-items-center">
-                        <span id="formPanelTitle">NEW PURCHASE ORDER DIALOG</span>
-                    </div>
-                    <div class="p-4">
-                        <form id="purchaseOrderForm">
-                            <input type="hidden" id="editingOrderId" value="">
-                            
-                            <div class="row g-3 mb-4">
-                                <div class="col-sm-6 col-md-4">
-                                    <label class="form-label small fw-semibold">Select Supplier</label>
-                                    <select id="formSupplierSelect" class="form-select form-select-sm table-form-input">
-                                        <option value="1">Al-Karam Textile Mills</option>
-                                        <option value="2">Gul Ahmed Fabrics</option>
-                                        <option value="3">Sana Safinaz Production Unit</option>
-                                    </select>
-                                </div>
-                                <div class="col-sm-6 col-md-4">
-                                    <label class="form-label small fw-semibold">Expected Delivery Date</label>
-                                    <input type="date" id="formDeliveryDate" class="form-control form-control-sm table-form-input" value="2026-06-25">
-                                </div>
-                                <div class="col-sm-12 col-md-4">
-                                    <label class="form-label small fw-semibold">Initial Order Status</label>
-                                    <select id="formOrderStatus" class="form-select form-select-sm table-form-input">
-                                        <option value="Pending Audit">Pending Audit</option>
-                                        <option value="Approved">Approved</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="border-top pt-3">
-                                <h6 class="fw-bold text-secondary small text-uppercase mb-3">Add Items to Order Manifest</h6>
-                                
-                                <div class="table-responsive shadow-sm border rounded">
-                                    <table class="table table-bordered table-sm m-0 align-middle">
-                                        <thead>
-                                            <tr>
-                                                <th class="col-w-subcat">Sub Category</th>
-                                                <th class="col-w-prod">Product Name</th>
-                                                <th class="col-w-sku">Variant SKU Lookups</th>
-                                                <th class="col-w-qty">Qty</th>
-                                                <th class="col-w-cost">Unit Cost (PKR)</th>
-                                                <th class="col-w-subtotal">Computed Subtotal</th>
-                                                <th style="width: 50px;" class="text-center">Action</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="draftManifestItemsBody">
-                                            <tr id="emptyRowPlaceholder">
-                                                <td colspan="7" class="text-center text-muted py-4">No items added to this purchase draft yet. Click the button below to append rows.</td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-
-                                <div class="mt-3">
-                                    <button type="button" id="appendVariantRowBtn" class="btn btn-outline-primary btn-sm fw-medium px-3 py-2">
-                                        <i class="fa-solid fa-square-plus me-1"></i> Add Variant Item Row
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
-                                <button type="button" class="btn btn-sm btn-light border px-3" id="cancelFormBtn">Cancel</button>
-                                <button type="button" id="savePurchaseOrderBtn" class="btn btn-sm btn-custom-dark px-4">Commit & Save Order</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            <div class="table-responsive">
+                <table class="table align-middle m-0 elira-table" id="supplierMasterTable">
+                    <thead>
+                        <tr>
+                            <th>Supplier Details</th>
+                            <th>Category</th>
+                        </tr>
+                    </thead>
+                    <tbody id="supplierTableBody"></tbody>
+                </table>
             </div>
-
-            <div class="row g-4">
-                <div class="col-lg-5 col-xl-5">
-                    <div class="content-card">
-                        <div class="card-title-bar">Active Suppliers</div>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle m-0" id="supplierMasterTable">
-                                <thead>
-                                    <tr>
-                                        <th>Supplier Details</th>
-                                        <th>Category</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="supplierTableBody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="col-lg-7 col-xl-7">
-                    <div class="content-card">
-                        <div class="card-title-bar d-flex align-items-center gap-2">
-                            <div class="indicator-dot"></div>
-                            <span>Associated Purchase Orders</span>
-                        </div>
-                        <div class="p-4" style="background-color: #f8fafc;">
-                            <div class="mb-3">
-                                <span class="text-uppercase text-secondary fw-bold" style="font-size: 0.65rem;">Active Records View</span>
-                                <h5 class="fw-bold m-0 mt-1" id="selectedSupplierTitleDisplay">Al-Karam Textile Mills</h5>
-                            </div>
-                            <hr>
-                            <div id="inspectorOrdersContainer"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="~/js/site.js"></script>
-</body>
-</html>
+    <!-- Right: Associated Orders Inspector -->
+    <div class="col-lg-7">
+        <div class="content-card h-100">
+            <div class="card-title-bar d-flex align-items-center gap-2">
+                <div class="indicator-dot"></div>
+                <span>Associated Purchase Orders</span>
+            </div>
+            <div class="card-body" style="background-color: #f8fafc; border-radius: 0 0 10px 10px;">
+                <div class="mb-3">
+                    <span class="text-uppercase text-secondary fw-bold" style="font-size:0.62rem;">Active Records View</span>
+                    <h5 class="fw-bold m-0 mt-1" id="selectedSupplierTitleDisplay">—</h5>
+                </div>
+                <hr>
+                <div id="inspectorOrdersContainer">
+                    <div class="text-center py-5 text-muted small">
+                        <i class="fa-solid fa-arrow-left me-2"></i>Select a supplier to view their orders.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+<script src="~/js/site.js" asp-append-version="true"></script>
+<script>
+    // Wire cancel buttons to the shared resetFormState
+    document.getElementById('cancelFormBtnBottom')?.addEventListener('click', resetFormState);
+</script>
+}

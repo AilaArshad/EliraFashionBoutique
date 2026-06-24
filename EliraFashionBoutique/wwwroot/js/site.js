@@ -37,31 +37,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         formSupplierSelect.innerHTML = "";
     }
 
-    // Inject "Select Category" dynamically in-place next to Supplier select
-    if (formSupplierSelect) {
-        const supplierDiv = formSupplierSelect.closest(".col-sm-6");
-        const dateDiv = document.getElementById("formDeliveryDate").closest(".col-sm-6");
-        const statusDiv = document.getElementById("formOrderStatus").closest(".col-sm-12");
-
-        if (supplierDiv && dateDiv && statusDiv) {
-            supplierDiv.className = "col-sm-6 col-md-3";
-            dateDiv.className = "col-sm-6 col-md-3";
-            statusDiv.className = "col-sm-12 col-md-3";
-
-            const categoryDiv = document.createElement("div");
-            categoryDiv.className = "col-sm-6 col-md-3";
-            categoryDiv.id = "categoryFilterContainer";
-            categoryDiv.innerHTML = `
-                <label class="form-label small fw-semibold">Select Category</label>
-                <select id="formCategorySelect" class="form-select form-select-sm table-form-input">
-                </select>
-            `;
-            supplierDiv.parentNode.insertBefore(categoryDiv, dateDiv);
-
-            // Add event listener to formCategorySelect
-            const formCategorySelect = document.getElementById("formCategorySelect");
-            formCategorySelect.addEventListener("change", handleTopCategoryChange);
-        }
+    // Add event listener to formCategorySelect
+    const formCategorySelect = document.getElementById("formCategorySelect");
+    if (formCategorySelect) {
+        formCategorySelect.addEventListener("change", handleTopCategoryChange);
     }
 
     // Load Initial Data
@@ -535,7 +514,7 @@ async function appendVariantRowWithData(id, orderItem) {
 
     const variants = await fetchVariantsByProduct(targetProduct.id);
     const variantSelect = row.querySelector(".variant-select");
-    variantSelect.innerHTML = variants.map(v => `<option value="${v.variantId}">${v.sku} (${v.size} - ${v.color})</option>`).join('');
+    variantSelect.innerHTML = variants.map(v => `<option value="${v.variantId}">${v.sku}(${v.size}-${v.color}) ${v.price}</option>`).join('');
     variantSelect.value = targetVariant.variantId;
 
     row.querySelector(".cost-output").value = targetVariant.price;
@@ -576,7 +555,7 @@ async function handleProductChange(rowId) {
     const productId = parseInt(productSelect.value);
     const variants = await fetchVariantsByProduct(productId);
 
-    variantSelect.innerHTML = variants.map(v => `<option value="${v.variantId}">${v.sku} (${v.size} - ${v.color})</option>`).join('');
+    variantSelect.innerHTML = variants.map(v => `<option value="${v.variantId}">${v.sku}(${v.size}-${v.color}) ${v.price}</option>`).join('');
 
     await handleVariantChange(rowId);
 }
@@ -667,7 +646,7 @@ async function submitPurchaseOrderForm() {
     const rows = document.querySelectorAll(".manifest-item-row");
 
     if (rows.length === 0) {
-        alert("Manifest is empty! Please append items before saving.");
+        showToast('Manifest is empty! Please append at least one item before saving.', 'warning');
         return;
     }
 
@@ -690,7 +669,7 @@ async function submitPurchaseOrderForm() {
     });
 
     if (!isValid) {
-        alert("Please ensure all rows in the manifest table have a selected Category, Product, Variant, and a valid Quantity.");
+        showToast('Please ensure all rows have a selected Category, Product, Variant, and a valid Quantity.', 'warning');
         return;
     }
 
@@ -702,12 +681,12 @@ async function submitPurchaseOrderForm() {
         const itemsPayload = [];
         rows.forEach(row => {
             const variantId = parseInt(row.querySelector(".variant-select").value);
-            const qty = parseInt(row.querySelector(".qty-input").value);
+            const quantityOrdered = parseInt(row.querySelector(".qty-input").value);
             const unitCost = parseFloat(row.querySelector(".cost-output").value) || 0;
 
             itemsPayload.push({
                 variantId: variantId,
-                qty: qty,
+                quantityOrdered: quantityOrdered,
                 unitCost: unitCost
             });
         });
@@ -717,18 +696,18 @@ async function submitPurchaseOrderForm() {
             supplierId: parseInt(chosenSupplier),
             expectedDeliveryDate: deliveryDate,
             status: orderStatus,
-            manifestItems: itemsPayload
+            purchaseOrderItems: itemsPayload
         };
     } else {
         const itemsPayload = [];
         rows.forEach(row => {
             const variantId = parseInt(row.querySelector(".variant-select").value);
-            const qty = parseInt(row.querySelector(".qty-input").value);
+            const quantityOrdered = parseInt(row.querySelector(".qty-input").value);
             const subtotal = parseFloat(row.querySelector(".subtotal-output").getAttribute("data-raw")) || 0;
 
             itemsPayload.push({
                 variantId: variantId,
-                quantityOrdered: qty,
+                quantityOrdered: quantityOrdered,
                 subtotal: subtotal
             });
         });
@@ -737,7 +716,7 @@ async function submitPurchaseOrderForm() {
             supplierId: parseInt(chosenSupplier),
             expectedDeliveryDate: deliveryDate,
             status: orderStatus,
-            items: itemsPayload
+            purchaseOrderItems: itemsPayload
         };
     }
 
@@ -755,7 +734,7 @@ async function submitPurchaseOrderForm() {
             throw new Error(errorData.detail || "Database write transaction failed.");
         }
 
-        alert("Purchase order transaction saved successfully!");
+        showToast('Purchase order committed and saved successfully!', 'success');
         resetFormState();
 
         // Clear client-side cache so fresh lists are loaded in real-time
@@ -767,7 +746,7 @@ async function submitPurchaseOrderForm() {
         await syncAssociatedOrdersUI(chosenSupplier);
 
     } catch (error) {
-        alert(`Error saving order: ${error.message}`);
+        showToast(`Error saving order: ${error.message}`, 'error');
         console.error("Submission error:", error);
     }
 }

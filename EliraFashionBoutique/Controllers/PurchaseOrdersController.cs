@@ -15,9 +15,25 @@ public class PurchaseOrdersController : Controller
     }
 
     // GET: /PurchaseOrders
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
+        ViewBag.Suppliers = await _context.Suppliers.ToListAsync();
+        ViewBag.Categories = await _context.Categories.ToListAsync();
         return View();
+    }
+
+    // GET: /api/categories
+    [HttpGet("api/categories")]
+    public async Task<IActionResult> GetCategories()
+    {
+        var categories = await _context.Categories
+            .Select(c => new {
+                id = c.CategoryId,
+                name = c.CategoryName
+            })
+            .ToListAsync();
+
+        return Json(categories);
     }
 
     // GET: /api/suppliers
@@ -91,10 +107,11 @@ public class PurchaseOrdersController : Controller
     }
 
     // POST: /api/orders
+    // Binds directly to the PurchaseOrder entity model; items arrive via PurchaseOrderItems collection.
     [HttpPost("api/orders")]
-    public async Task<IActionResult> CreateOrder([FromBody] OrderInputDto input)
+    public async Task<IActionResult> CreateOrder([FromBody] PurchaseOrder input)
     {
-        if (input == null || input.Items == null || !input.Items.Any())
+        if (input == null || input.PurchaseOrderItems == null || !input.PurchaseOrderItems.Any())
         {
             return BadRequest(new { detail = "Manifest cannot be empty." });
         }
@@ -127,7 +144,7 @@ public class PurchaseOrdersController : Controller
             decimal calculatedTotal = 0;
 
             // Add Child Items
-            foreach (var itemInput in input.Items)
+            foreach (var itemInput in input.PurchaseOrderItems)
             {
                 var variant = await _context.ProductVariants.FindAsync(itemInput.VariantId);
                 if (variant == null)
@@ -172,13 +189,13 @@ public class PurchaseOrdersController : Controller
             order.TotalAmount = calculatedTotal;
 
             // Update the supplier's Category to match the Category Name of the purchase order items
-            var firstItemInput = input.Items.FirstOrDefault();
+            var firstItemInput = input.PurchaseOrderItems.FirstOrDefault();
             if (firstItemInput != null)
             {
                 var firstVariant = await _context.ProductVariants
                     .Include(v => v.Product)
-                        .ThenInclude(p => p.SubCategory)
-                            .ThenInclude(sc => sc.Category)
+                        .ThenInclude(p => p!.SubCategory)
+                            .ThenInclude(sc => sc!.Category)
                     .FirstOrDefaultAsync(v => v.VariantId == firstItemInput.VariantId);
                 if (firstVariant != null && firstVariant.Product != null && firstVariant.Product.SubCategory != null && firstVariant.Product.SubCategory.Category != null)
                 {
@@ -200,9 +217,9 @@ public class PurchaseOrdersController : Controller
 
     // POST: /api/purchaseorders/update
     [HttpPost("api/purchaseorders/update")]
-    public async Task<IActionResult> UpdateOrder([FromBody] OrderUpdateInputDto input)
+    public async Task<IActionResult> UpdateOrder([FromBody] PurchaseOrder input)
     {
-        if (input == null || input.ManifestItems == null || !input.ManifestItems.Any())
+        if (input == null || input.PurchaseOrderItems == null || !input.PurchaseOrderItems.Any())
         {
             return BadRequest(new { detail = "Items manifest list is required." });
         }
@@ -235,6 +252,14 @@ public class PurchaseOrdersController : Controller
             var matchedExistingItems = new List<PurchaseOrderItem>();
             var newItemsToInsert = new List<PurchaseOrderItem>();
 
+            // New manifest items from client
+            var incomingItems = input.ManifestItems;
+            var incomingVariantIds = incomingItems.Select(i => i.VariantId).ToHashSet();
+
+            // 1. DELETE: Completely remove any rows from database that the user deleted on the UI
+            var itemsToDelete = order.PurchaseOrderItems.Where(item => !incomingVariantIds.Contains(item.VariantId)).ToList();
+            _context.PurchaseOrderItems.RemoveRange(itemsToDelete);
+
             decimal calculatedTotal = 0;
 
             // 1. ADD & UPDATE DETECTOR LOOP
@@ -246,8 +271,8 @@ public class PurchaseOrdersController : Controller
                     throw new Exception($"Product Variant with ID {itemInput.VariantId} not found.");
                 }
 
-                decimal price = itemInput.UnitCost;
-                decimal itemSubtotal = price * itemInput.Qty;
+                decimal price = variant.VariantPrice ?? 0;
+                decimal itemSubtotal = price * itemInput.QuantityOrdered;
                 calculatedTotal += itemSubtotal;
 
                 // Dynamically find a matching unmatched existing item
@@ -257,7 +282,7 @@ public class PurchaseOrdersController : Controller
                 if (existingItem != null)
                 {
                     // UPDATE: Save any changes made to existing rows
-                    existingItem.QuantityOrdered = itemInput.Qty;
+                    existingItem.QuantityOrdered = itemInput.QuantityOrdered;
                     existingItem.Subtotal = itemSubtotal;
                     matchedExistingItems.Add(existingItem);
                     _context.Entry(existingItem).State = EntityState.Modified;
@@ -269,7 +294,7 @@ public class PurchaseOrdersController : Controller
                     {
                         PurchaseOrderId = order.PurchaseOrderId,
                         VariantId = itemInput.VariantId,
-                        QuantityOrdered = itemInput.Qty,
+                        QuantityOrdered = itemInput.QuantityOrdered,
                         Subtotal = itemSubtotal
                     };
                     newItemsToInsert.Add(newItem);
@@ -285,13 +310,13 @@ public class PurchaseOrdersController : Controller
                         inventory = new Inventory
                         {
                             VariantId = itemInput.VariantId,
-                            QuantityAvailable = itemInput.Qty
+                            QuantityAvailable = itemInput.QuantityOrdered
                         };
                         _context.Inventories.Add(inventory);
                     }
                     else
                     {
-                        inventory.QuantityAvailable += itemInput.Qty;
+                        inventory.QuantityAvailable += itemInput.QuantityOrdered;
                     }
                 }
             }
@@ -317,13 +342,13 @@ public class PurchaseOrdersController : Controller
             order.TotalAmount = calculatedTotal;
 
             // Update the supplier's Category to match the Category Name of the purchase order items
-            var firstItemInput = input.ManifestItems.FirstOrDefault();
+            var firstItemInput = input.PurchaseOrderItems.FirstOrDefault();
             if (firstItemInput != null && supplier != null)
             {
                 var firstVariant = await _context.ProductVariants
                     .Include(v => v.Product)
-                        .ThenInclude(p => p.SubCategory)
-                            .ThenInclude(sc => sc.Category)
+                        .ThenInclude(p => p!.SubCategory)
+                            .ThenInclude(sc => sc!.Category)
                     .FirstOrDefaultAsync(v => v.VariantId == firstItemInput.VariantId);
                 if (firstVariant != null && firstVariant.Product != null && firstVariant.Product.SubCategory != null && firstVariant.Product.SubCategory.Category != null)
                 {
@@ -341,60 +366,6 @@ public class PurchaseOrdersController : Controller
             await transaction.RollbackAsync();
             return StatusCode(500, new { detail = ex.Message });
         }
-    }
-
-    // GET: /api/categories
-    [HttpGet("api/categories")]
-    public async Task<IActionResult> GetCategories()
-    {
-        if (!await _context.Categories.AnyAsync())
-        {
-            var category1 = new Category { CategoryName = "Linens & Cotton", Description = "Premium linens and cotton fabrics" };
-            var category2 = new Category { CategoryName = "Bridal Wear", Description = "Luxury bridal wear collection" };
-            _context.Categories.AddRange(category1, category2);
-            await _context.SaveChangesAsync();
-
-            var subcat1 = new SubCategory { CategoryId = category1.CategoryId, SubcategoryName = "Linens", SeasonType = "Summer", IsActive = true };
-            var subcat2 = new SubCategory { CategoryId = category1.CategoryId, SubcategoryName = "Cotton", SeasonType = "Summer", IsActive = true };
-            var subcat3 = new SubCategory { CategoryId = category2.CategoryId, SubcategoryName = "Lehengas", SeasonType = "Winter", IsActive = true };
-            _context.SubCategories.AddRange(subcat1, subcat2, subcat3);
-            await _context.SaveChangesAsync();
-
-            var product1 = new Product { SubCategoryId = subcat1.SubCategoryId, ProductName = "Summer Linen Shirt", BasePrice = 1500, SKU = "LNN-SMR-SH-XL", IsActive = true };
-            var product2 = new Product { SubCategoryId = subcat2.SubCategoryId, ProductName = "Cotton Kurta", BasePrice = 1200, SKU = "CTN-KRT-M", IsActive = true };
-            var product3 = new Product { SubCategoryId = subcat3.SubCategoryId, ProductName = "Designer Bridal Lehenga", BasePrice = 85000, SKU = "BDL-LHG-RED", IsActive = true };
-            _context.Products.AddRange(product1, product2, product3);
-            await _context.SaveChangesAsync();
-
-            var variant1 = new ProductVariant { ProductId = product1.ProductId, VariantSKU = "LNN-SMR-SH-XL", VariantPrice = 1500, IsActive = true };
-            var variant2 = new ProductVariant { ProductId = product2.ProductId, VariantSKU = "CTN-KRT-M", VariantPrice = 1200, IsActive = true };
-            var variant3 = new ProductVariant { ProductId = product3.ProductId, VariantSKU = "BDL-LHG-RED", VariantPrice = 85000, IsActive = true };
-            _context.ProductVariants.AddRange(variant1, variant2, variant3);
-            await _context.SaveChangesAsync();
-
-            // Default supplier categories to Linens & Cotton if they are empty
-            var suppliersList = await _context.Suppliers.ToListAsync();
-            if (suppliersList.Any())
-            {
-                foreach (var sup in suppliersList)
-                {
-                    if (string.IsNullOrEmpty(sup.Category))
-                    {
-                        sup.Category = "Linens & Cotton";
-                    }
-                }
-                await _context.SaveChangesAsync();
-            }
-        }
-
-        var categories = await _context.Categories
-            .Select(c => new {
-                id = c.CategoryId,
-                name = c.CategoryName
-            })
-            .ToListAsync();
-
-        return Json(categories);
     }
 
     // GET: /api/subcategories
@@ -431,20 +402,63 @@ public class PurchaseOrdersController : Controller
     [HttpGet("api/variants/by-product")]
     public async Task<IActionResult> GetVariantsByProduct([FromQuery] int product_id)
     {
-        var variants = await _context.ProductVariants
+        var variantsList = await _context.ProductVariants
             .Include(v => v.Size)
             .Include(v => v.Color)
             .Where(v => v.ProductId == product_id)
-            .Select(v => new {
-                variantId = v.VariantId,
-                sku = v.VariantSKU,
-                size = v.Size != null ? v.Size.SizeName : "N/A",
-                color = v.Color != null ? v.Color.ColorName : "N/A",
-                price = v.VariantPrice ?? 0
-            })
             .ToListAsync();
 
-        return Json(variants);
+        var result = new List<object>();
+
+        foreach (var v in variantsList)
+        {
+            string sizeName = v.Size?.SizeName ?? "N/A";
+            string colorName = v.Color?.ColorName ?? "N/A";
+
+            if ((sizeName == "N/A" || colorName == "N/A") && !string.IsNullOrEmpty(v.VariantSKU))
+            {
+                var parts = v.VariantSKU.Split('-');
+                if (parts.Length >= 4)
+                {
+                    string sizeAbbr = parts[parts.Length - 2];
+                    string colorIdStr = parts[parts.Length - 1];
+
+                    if (sizeName == "N/A")
+                    {
+                        sizeName = sizeAbbr switch
+                        {
+                            "XS" => "Extra Small",
+                            "S" => "Small",
+                            "M" => "Medium",
+                            "L" => "Large",
+                            "XL" => "Extra Large",
+                            "XXL" => "Double Extra Large",
+                            _ => sizeAbbr
+                        };
+                    }
+
+                    if (colorName == "N/A" && int.TryParse(colorIdStr, out int colorId))
+                    {
+                        var colorObj = await _context.Colors.FindAsync(colorId);
+                        if (colorObj != null)
+                        {
+                            colorName = colorObj.ColorName;
+                        }
+                    }
+                }
+            }
+
+            result.Add(new
+            {
+                variantId = v.VariantId,
+                sku = v.VariantSKU,
+                size = sizeName,
+                color = colorName,
+                price = v.VariantPrice ?? 0
+            });
+        }
+
+        return Json(result);
     }
 
     // GET: /api/variants/{variantId}
@@ -491,34 +505,5 @@ public class PurchaseOrdersController : Controller
     }
 }
 
-// Request ViewModels for Model Binding
-public class OrderInputDto
-{
-    public int SupplierId { get; set; }
-    public DateTime ExpectedDeliveryDate { get; set; }
-    public string Status { get; set; } = "Pending Audit";
-    public List<OrderItemInputDto> Items { get; set; } = new();
-}
-
-public class OrderItemInputDto
-{
-    public int VariantId { get; set; }
-    public int QuantityOrdered { get; set; }
-    public decimal Subtotal { get; set; }
-}
-
-public class OrderUpdateInputDto
-{
-    public int PurchaseOrderId { get; set; }
-    public int SupplierId { get; set; }
-    public DateTime ExpectedDeliveryDate { get; set; }
-    public string Status { get; set; } = "Pending Audit";
-    public List<OrderItemUpdateInputDto> ManifestItems { get; set; } = new();
-}
-
-public class OrderItemUpdateInputDto
-{
-    public int VariantId { get; set; }
-    public int Qty { get; set; }
-    public decimal UnitCost { get; set; }
-}
+// NOTE: Request ViewModels have been moved to
+// ViewModels/PurchaseOrderViewModels.cs for clean architecture separation.
