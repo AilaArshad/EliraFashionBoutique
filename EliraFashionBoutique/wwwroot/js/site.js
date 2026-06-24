@@ -109,7 +109,7 @@ async function loadSuppliers() {
     const tbody = document.getElementById("supplierTableBody");
     if (tbody) {
         tbody.innerHTML = "";
-        
+
         // Filter suppliers to only show those with purchase orders (real-time linking details)
         const activeSuppliers = suppliers.filter(s => s.hasOrders);
         activeSuppliers.forEach(supplier => {
@@ -256,9 +256,11 @@ async function syncAssociatedOrdersUI(supplierId) {
                         <span class="text-muted small">Total Sum Amount:</span>
                         <h5 class="fw-bold text-primary m-0">PKR ${po.totalAmount.toLocaleString()}</h5>
                     </div>
+                    ${po.status === "Approved" ? "" : `
                     <button class="btn btn-sm btn-outline-primary px-3 fw-medium" onclick="populateOrderToForm('${supplierId}', ${po.purchaseOrderId})">
                         <i class="fa-solid fa-pen-to-square me-1"></i> Update
                     </button>
+                    `}
                 </div>
             </div>`;
     });
@@ -325,6 +327,10 @@ async function populateOrderToForm(supplierId, orderId) {
         rowCounter++;
         await appendVariantRowWithData(rowCounter, item);
     }
+
+    // Apply the locking logic based on order status (exactly "Approved")
+    const isApproved = targetOrder.status && targetOrder.status.trim().toLowerCase() === "approved";
+    setFormLockState(isApproved);
 }
 
 /**
@@ -356,6 +362,76 @@ function resetFormState() {
     if (formElement) {
         bootstrap.Collapse.getOrCreateInstance(formElement).hide();
     }
+
+    setFormLockState(false);
+}
+
+/**
+ * Lock/Unlock form inputs, dropdowns, and save buttons based on read-only requirement.
+ */
+function setFormLockState(isLocked) {
+    const saveBtn = document.getElementById("savePurchaseOrderBtn");
+    if (saveBtn) {
+        if (isLocked) {
+            saveBtn.style.display = "none";
+        } else {
+            saveBtn.style.display = "";
+        }
+        saveBtn.disabled = false;
+    }
+
+    const supplierSelect = document.getElementById("formSupplierSelect");
+    if (supplierSelect) {
+        supplierSelect.disabled = false;
+    }
+
+    const categorySelect = document.getElementById("formCategorySelect");
+    if (categorySelect) {
+        categorySelect.disabled = false;
+    }
+
+    const deliveryDate = document.getElementById("formDeliveryDate");
+    if (deliveryDate) {
+        deliveryDate.disabled = false;
+        deliveryDate.readOnly = false;
+    }
+
+    const orderStatus = document.getElementById("formOrderStatus");
+    if (orderStatus) {
+        orderStatus.disabled = false;
+    }
+
+    const appendBtn = document.getElementById("appendVariantRowBtn");
+    if (appendBtn) {
+        appendBtn.disabled = false;
+    }
+
+    // Lock/Unlock existing rows in manifest table
+    const rows = document.querySelectorAll(".manifest-item-row");
+    rows.forEach(row => {
+        const subcat = row.querySelector(".subcat-select");
+        if (subcat) subcat.disabled = false;
+
+        const product = row.querySelector(".product-select");
+        if (product) product.disabled = false;
+
+        const variant = row.querySelector(".variant-select");
+        if (variant) variant.disabled = false;
+
+        const qty = row.querySelector(".qty-input");
+        if (qty) {
+            qty.disabled = false;
+            qty.readOnly = false;
+        }
+
+        const trashBtn = row.querySelector("button");
+        if (trashBtn) {
+            trashBtn.disabled = false;
+            trashBtn.style.pointerEvents = "auto";
+            trashBtn.classList.add("text-danger");
+            trashBtn.classList.remove("text-secondary");
+        }
+    });
 }
 
 // ==========================================
@@ -726,3 +802,164 @@ window.evaluatePlaceholderState = evaluatePlaceholderState;
 window.resetFormState = resetFormState;
 window.syncAssociatedOrdersUI = syncAssociatedOrdersUI;
 window.handleTopCategoryChange = handleTopCategoryChange;
+
+// ==========================================
+// PART 5: DYNAMIC INVENTORY STOCK HUB SYSTEM
+// ==========================================
+let targetedInventoryProductId = null;
+
+async function renderInventoryCatalogTable() {
+    const tbody = document.getElementById("productCatalogStockBody");
+    if (!tbody) return;
+    tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-secondary small"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading inventory matrix...</td></tr>`;
+
+    try {
+        const response = await fetch("/api/inventory");
+        if (!response.ok) throw new Error("Failed to fetch inventory.");
+        const data = await response.json();
+
+        tbody.innerHTML = "";
+
+        if (data.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-4 text-muted small">No products in database.</td></tr>`;
+            return;
+        }
+
+        if (targetedInventoryProductId === null) {
+            targetedInventoryProductId = data[0].id;
+        }
+
+        data.forEach(prod => {
+            let stateBadgeMarkup = `<span class="badge-pill-custom stock-healthy"><i class="fa-solid fa-circle-check me-1"></i> Stock Healthy</span>`;
+            if (prod.triggerReorderWarning) {
+                stateBadgeMarkup = `<span class="badge-pill-custom stock-reorder"><i class="fa-solid fa-triangle-exclamation me-1"></i> Needs Reorder</span>`;
+            }
+            if (prod.isOutOfStock) {
+                stateBadgeMarkup = `<span class="badge-pill-custom stock-critical"><i class="fa-solid fa-circle-xmark me-1"></i> Out of Stock</span>`;
+            }
+
+            const isCurrentActiveRow = prod.id === targetedInventoryProductId ? "active-row" : "";
+
+            tbody.innerHTML += `
+                <tr data-product-id="${prod.id}" class="${isCurrentActiveRow}" style="cursor: pointer;">
+                    <td>
+                        <div class="fw-bold text-dark mb-0">${prod.name}</div>
+                        <small class="text-muted d-block text-truncate" style="max-width: 220px;">${prod.description}</small>
+                    </td>
+                    <td><span class="font-monospace text-secondary bg-light px-2 py-1 rounded small border">${prod.sku}</span></td>
+                    <td class="text-center fw-bold fs-6">${prod.cumulativeStock}</td>
+                    <td>${stateBadgeMarkup}</td>
+                </tr>`;
+        });
+
+        if (targetedInventoryProductId !== null) {
+            syncVariantBreakdownPanel(targetedInventoryProductId);
+        }
+    } catch (error) {
+        console.error("Error loading inventory:", error);
+        tbody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-4 small">Error loading inventory: ${error.message}</td></tr>`;
+    }
+}
+
+async function syncVariantBreakdownPanel(productId) {
+    targetedInventoryProductId = productId;
+    const container = document.getElementById("variantLiveContainer");
+    if (!container) return;
+    container.innerHTML = `<div class="text-center py-4 text-secondary small"><i class="fa-solid fa-spinner fa-spin me-2"></i>Loading variants breakdown...</div>`;
+
+    try {
+        const leftRow = document.querySelector(`tr[data-product-id="${productId}"]`);
+        if (leftRow) {
+            const nameDiv = leftRow.querySelector(".fw-bold");
+            document.getElementById("selectedProductNameDisplay").innerText = nameDiv ? nameDiv.innerText : "---";
+        }
+
+        const response = await fetch(`/api/inventory/${productId}/variants`);
+        if (!response.ok) throw new Error("Failed to fetch variant breakdown.");
+        const structuralVariants = await response.json();
+
+        container.innerHTML = "";
+
+        if (structuralVariants.length === 0) {
+            container.innerHTML = `<div class="text-center py-4 text-muted small">No variant metrics associated here.</div>`;
+            return;
+        }
+
+        structuralVariants.forEach(variant => {
+            const isUnderReorderBoundary = variant.quantityAvailable <= variant.reorderLevel;
+            let badgeClass = "stock-healthy";
+            let alertContextMarkup = "";
+
+            if (isUnderReorderBoundary) {
+                badgeClass = "stock-reorder";
+                alertContextMarkup = `
+                    <div class="alert alert-warning p-2 mt-2 mb-0 d-flex align-items-center gap-2" style="font-size: 0.72rem; border-radius: 6px;">
+                        <i class="fa-solid fa-bell"></i>
+                        <span>Stock is below safety boundary margin.</span>
+                    </div>`;
+            }
+            if (variant.quantityAvailable === 0) badgeClass = "stock-critical";
+
+            container.innerHTML += `
+                <div class="border rounded p-3 bg-light-subtle shadow-sm position-relative" style="border-color: #f1f5f9;">
+                    <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+                        <div>
+                            <span class="font-monospace fw-bold text-dark d-block mb-1" style="font-size: 0.85rem;">${variant.sku}</span>
+                            <div class="d-flex align-items-center gap-2 text-secondary small">
+                                <span>Size: <strong class="text-dark">${variant.size}</strong></span>
+                                <span class="text-muted">|</span>
+                                <span class="d-inline-flex align-items-center gap-1">
+                                    Color: <span class="color-preview-dot" style="background-color: ${variant.hex};"></span> 
+                                    <strong class="text-dark">${variant.colorName}</strong>
+                                </span>
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <span class="badge-pill-custom ${badgeClass} py-1 px-2 mb-1" style="font-size: 0.68rem;">Qty: ${variant.quantityAvailable}</span>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 pt-2 border-top mt-2 align-items-center">
+                        <div class="col-6 text-muted" style="font-size: 0.75rem;">
+                            Reorder Threshold: <strong class="text-dark">${variant.reorderLevel} units</strong>
+                        </div>
+                        <div class="col-6 text-end">
+                            <button type="button" class="btn-link-action" onclick="triggerThresholdUpdateControl('${variant.sku}', ${variant.reorderLevel})">
+                                <i class="fa-solid fa-pen-to-square me-1"></i>Update Threshold
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="text-muted mt-2" style="font-size: 0.68rem; font-style: italic;">
+                        <i class="fa-solid fa-clock me-1"></i> System Timestamp: ${variant.lastUpdated}
+                    </div>
+
+                    ${alertContextMarkup}
+                </div>`;
+        });
+    } catch (error) {
+        console.error("Error loading variants:", error);
+        container.innerHTML = `<div class="text-center py-4 text-danger small">Error loading breakdown: ${error.message}</div>`;
+    }
+}
+
+function triggerThresholdUpdateControl(sku, currentLevel) {
+    const formCollapseElement = document.getElementById('thresholdAdjustmentFormCollapse');
+    const displayField = document.getElementById('adjustVariantSKUDisplay');
+    const inputElement = document.getElementById('adjustThresholdInput');
+    if (!formCollapseElement || !displayField || !inputElement) return;
+
+    displayField.value = sku;
+    inputElement.value = currentLevel;
+
+    const bsCollapse = bootstrap.Collapse.getOrCreateInstance(formCollapseElement);
+    bsCollapse.show();
+
+    formCollapseElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    inputElement.focus();
+}
+
+window.renderInventoryCatalogTable = renderInventoryCatalogTable;
+window.syncVariantBreakdownPanel = syncVariantBreakdownPanel;
+window.triggerThresholdUpdateControl = triggerThresholdUpdateControl;
+
