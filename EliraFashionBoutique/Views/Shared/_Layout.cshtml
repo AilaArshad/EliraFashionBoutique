@@ -97,6 +97,16 @@
                     <span class="nav-label">User Management</span>
                 </a>
             </li>
+
+            <!-- ═══ NEW: REPORTS MODULE ═══ -->
+            <li class="sidebar-nav-item">
+                <a href="/Reports/Index"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "active" : "")"
+                   data-tooltip="Reports">
+                    <i class="fa-solid fa-chart-line nav-icon"></i>
+                    <span class="nav-label">Reports</span>
+                </a>
+            </li>
         </ul>
 
         <!-- Collapse Toggle -->
@@ -132,92 +142,92 @@
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-        // ─── SIDEBAR COLLAPSE LOGIC ───────────────────────────────────────────
-        (function () {
-            const sidebar   = document.getElementById('elira-sidebar');
-            const wrapper   = document.getElementById('main-content-wrapper');
-            const toggleBtn = document.getElementById('sidebarToggleBtn');
+            // ─── SIDEBAR COLLAPSE LOGIC ───────────────────────────────────────────
+            (function () {
+                const sidebar   = document.getElementById('elira-sidebar');
+                const wrapper   = document.getElementById('main-content-wrapper');
+                const toggleBtn = document.getElementById('sidebarToggleBtn');
 
-            // Restore persisted state
-            const isCollapsed = localStorage.getItem('elira_sidebar_collapsed') === 'true';
-            if (isCollapsed) {
-                sidebar.classList.add('collapsed');
-                wrapper.classList.add('sidebar-collapsed');
+                // Restore persisted state
+                const isCollapsed = localStorage.getItem('elira_sidebar_collapsed') === 'true';
+                if (isCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    wrapper.classList.add('sidebar-collapsed');
+                }
+
+                toggleBtn.addEventListener('click', function () {
+                    const nowCollapsed = sidebar.classList.toggle('collapsed');
+                    wrapper.classList.toggle('sidebar-collapsed', nowCollapsed);
+                    localStorage.setItem('elira_sidebar_collapsed', nowCollapsed);
+                });
+            })();
+
+            // ─── GLOBAL TOAST NOTIFICATION SYSTEM ────────────────────────────────
+            /**
+             * Shows a branded toast notification.
+             * @@param {string} message   - Text to display.
+             * @@param {'success'|'error'|'warning'|'info'} type - Style variant.
+             * @@param {number} duration  - Auto-dismiss ms (default 3500).
+             */
+            function showToast(message, type = 'success', duration = 3500) {
+                const container = document.getElementById('elira-toast-container');
+                if (!container) return;
+
+                const icons = {
+                    success: 'fa-circle-check',
+                    error:   'fa-circle-xmark',
+                    warning: 'fa-triangle-exclamation',
+                    info:    'fa-circle-info'
+                };
+
+                const toast = document.createElement('div');
+                toast.className = `elira-toast toast-${type}`;
+                toast.innerHTML = `
+                    <i class="fa-solid ${icons[type] || icons.info} toast-icon"></i>
+                    <span class="toast-message">${message}</span>
+                    <button class="toast-close" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button>
+                `;
+
+                container.appendChild(toast);
+
+                // Animate in
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => toast.classList.add('show'));
+                });
+
+                // Close button
+                toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
+
+                // Auto-dismiss
+                const timer = setTimeout(() => dismissToast(toast), duration);
+                toast._timer = timer;
             }
 
-            toggleBtn.addEventListener('click', function () {
-                const nowCollapsed = sidebar.classList.toggle('collapsed');
-                wrapper.classList.toggle('sidebar-collapsed', nowCollapsed);
-                localStorage.setItem('elira_sidebar_collapsed', nowCollapsed);
-            });
-        })();
-
-        // ─── GLOBAL TOAST NOTIFICATION SYSTEM ────────────────────────────────
-        /**
-         * Shows a branded toast notification.
-         * @@param {string} message   - Text to display.
-         * @@param {'success'|'error'|'warning'|'info'} type - Style variant.
-         * @@param {number} duration  - Auto-dismiss ms (default 3500).
-         */
-        function showToast(message, type = 'success', duration = 3500) {
-            const container = document.getElementById('elira-toast-container');
-            if (!container) return;
-
-            const icons = {
-                success: 'fa-circle-check',
-                error:   'fa-circle-xmark',
-                warning: 'fa-triangle-exclamation',
-                info:    'fa-circle-info'
-            };
-
-            const toast = document.createElement('div');
-            toast.className = `elira-toast toast-${type}`;
-            toast.innerHTML = `
-                <i class="fa-solid ${icons[type] || icons.info} toast-icon"></i>
-                <span class="toast-message">${message}</span>
-                <button class="toast-close" aria-label="Dismiss"><i class="fa-solid fa-xmark"></i></button>
-            `;
-
-            container.appendChild(toast);
-
-            // Animate in
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => toast.classList.add('show'));
-            });
-
-            // Close button
-            toast.querySelector('.toast-close').addEventListener('click', () => dismissToast(toast));
-
-            // Auto-dismiss
-            const timer = setTimeout(() => dismissToast(toast), duration);
-            toast._timer = timer;
-        }
-
-        function dismissToast(toast) {
-            clearTimeout(toast._timer);
-            toast.classList.remove('show');
-            toast.classList.add('hide');
-            toast.addEventListener('transitionend', () => toast.remove(), { once: true });
-        }
-
-        // ─── RENDER TEMPDATA FEEDBACK AS TOASTS ──────────────────────────────
-        (function () {
-            @if (TempData["Success"] != null)
-            {
-                <text>showToast('@Html.Raw(TempData["Success"]?.ToString()?.Replace("'", "\\'"))', 'success');</text>
+            function dismissToast(toast) {
+                clearTimeout(toast._timer);
+                toast.classList.remove('show');
+                toast.classList.add('hide');
+                toast.addEventListener('transitionend', () => toast.remove(), { once: true });
             }
-            @if (TempData["Error"] != null)
-            {
-                <text>showToast('@Html.Raw(TempData["Error"]?.ToString()?.Replace("'", "\\'"))', 'error');</text>
-            }
-            @if (TempData["Warning"] != null)
-            {
-                <text>showToast('@Html.Raw(TempData["Warning"]?.ToString()?.Replace("'", "\\'"))', 'warning');</text>
-            }
-        })();
 
-        // Expose globally for views
-        window.showToast = showToast;
+            // ─── RENDER TEMPDATA FEEDBACK AS TOASTS ──────────────────────────────
+            (function () {
+                @if (TempData["Success"] != null)
+                {
+                        <text>showToast('@Html.Raw(TempData["Success"]?.ToString()?.Replace("'", "\\'"))', 'success');</text>
+                }
+                @if (TempData["Error"] != null)
+                {
+                        <text>showToast('@Html.Raw(TempData["Error"]?.ToString()?.Replace("'", "\\'"))', 'error');</text>
+                }
+                @if (TempData["Warning"] != null)
+                {
+                        <text>showToast('@Html.Raw(TempData["Warning"]?.ToString()?.Replace("'", "\\'"))', 'warning');</text>
+                }
+            })();
+
+            // Expose globally for views
+            window.showToast = showToast;
     </script>
 
     @await RenderSectionAsync("Scripts", required: false)
