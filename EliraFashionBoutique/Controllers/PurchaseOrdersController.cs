@@ -220,26 +220,25 @@ public class PurchaseOrdersController : Controller
                 return NotFound(new { detail = "Purchase Order not found." });
             }
 
+            if (order.Status != null && order.Status.Trim().Equals("Approved", System.StringComparison.Ordinal))
+            {
+                return BadRequest(new { detail = "Approved Purchase Orders are read-only and cannot be updated." });
+            }
+
             var supplier = await _context.Suppliers.FindAsync(input.SupplierId);
             System.Console.WriteLine($"[PURCHASE ORDER LOG] Updating Purchase Order #{input.PurchaseOrderId} for Supplier {supplier?.SupplierName} (SupplierID: {input.SupplierId}, Associated UserID: {supplier?.UserId})");
 
             string previousStatus = order.Status;
 
-            // Separate items in DB by VariantId
-            var existingItemsMap = order.PurchaseOrderItems.ToDictionary(item => item.VariantId);
-
-            // New manifest items from client
-            var incomingItems = input.ManifestItems;
-            var incomingVariantIds = incomingItems.Select(i => i.VariantId).ToHashSet();
-
-            // 1. DELETE: Completely remove any rows from database that the user deleted on the UI
-            var itemsToDelete = order.PurchaseOrderItems.Where(item => !incomingVariantIds.Contains(item.VariantId)).ToList();
-            _context.PurchaseOrderItems.RemoveRange(itemsToDelete);
+            // Separate items in DB to properly track and sync them
+            var existingItems = order.PurchaseOrderItems.ToList();
+            var matchedExistingItems = new List<PurchaseOrderItem>();
+            var newItemsToInsert = new List<PurchaseOrderItem>();
 
             decimal calculatedTotal = 0;
 
-            // 2. ADD & UPDATE
-            foreach (var itemInput in incomingItems)
+            // 1. ADD & UPDATE DETECTOR LOOP
+            foreach (var itemInput in input.ManifestItems)
             {
                 var variant = await _context.ProductVariants.FindAsync(itemInput.VariantId);
                 if (variant == null)
@@ -251,26 +250,32 @@ public class PurchaseOrdersController : Controller
                 decimal itemSubtotal = price * itemInput.Qty;
                 calculatedTotal += itemSubtotal;
 
-                if (existingItemsMap.TryGetValue(itemInput.VariantId, out var existingItem))
+                // Dynamically find a matching unmatched existing item
+                var existingItem = existingItems
+                    .FirstOrDefault(item => item.VariantId == itemInput.VariantId && !matchedExistingItems.Contains(item));
+
+                if (existingItem != null)
                 {
                     // UPDATE: Save any changes made to existing rows
                     existingItem.QuantityOrdered = itemInput.Qty;
                     existingItem.Subtotal = itemSubtotal;
+                    matchedExistingItems.Add(existingItem);
+                    _context.Entry(existingItem).State = EntityState.Modified;
                 }
                 else
                 {
-                    // ADD: Insert any newly added variant rows into the database
+                    // ADD: Insert newly added variant rows dynamically
                     var newItem = new PurchaseOrderItem
                     {
-                        PurchaseOrderId = input.PurchaseOrderId,
+                        PurchaseOrderId = order.PurchaseOrderId,
                         VariantId = itemInput.VariantId,
                         QuantityOrdered = itemInput.Qty,
                         Subtotal = itemSubtotal
                     };
-                    _context.PurchaseOrderItems.Add(newItem);
+                    newItemsToInsert.Add(newItem);
                 }
 
-                // 3. INVENTORY ADJUSTMENT:
+                // 2. INVENTORY ADJUSTMENT:
                 // If status transitions to "Approved", ensure QuantityAvailable is accurately incremented
                 if (input.Status == "Approved" && previousStatus != "Approved")
                 {
@@ -289,6 +294,20 @@ public class PurchaseOrdersController : Controller
                         inventory.QuantityAvailable += itemInput.Qty;
                     }
                 }
+            }
+
+            // 3. DELETE: Completely remove any rows from database that the user deleted on the UI
+            var itemsToDelete = existingItems.Where(item => !matchedExistingItems.Contains(item)).ToList();
+            foreach (var item in itemsToDelete)
+            {
+                order.PurchaseOrderItems.Remove(item);
+                _context.PurchaseOrderItems.Remove(item);
+            }
+
+            // 4. INSERT: Add newly created item entities to parent order's tracked navigation collection
+            foreach (var newItem in newItemsToInsert)
+            {
+                order.PurchaseOrderItems.Add(newItem);
             }
 
             // Update parent metadata

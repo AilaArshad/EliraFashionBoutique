@@ -1,0 +1,295 @@
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elira Boutique - Inventory Central Hub</title>
+    <!-- Bootstrap & Professional Fonts -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --body-bg: #f8fafc;
+            
+            /* Dark Navy Theme Styling */
+            --btn-dark-navy: #1b223c;
+            --btn-dark-navy-hover: #12182c;
+            --accent-blue: #3b82f6;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--body-bg);
+            color: var(--text-dark);
+            overflow-x: hidden;
+        }
+        
+        .main-content {
+            padding: 2rem;
+            width: 100%;
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        /* Clean Content Box Panels */
+        .content-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+        }
+        .card-title-bar {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #fff;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Custom Dark Navy Buttons */
+        .btn-custom-dark {
+            background-color: var(--btn-dark-navy);
+            color: #ffffff;
+            border: 1px solid var(--btn-dark-navy);
+            transition: all 0.2s ease;
+        }
+        .btn-custom-dark:hover, .btn-custom-dark:focus {
+            background-color: var(--btn-dark-navy-hover);
+            color: #ffffff;
+            border-color: var(--btn-dark-navy-hover);
+        }
+
+        /* Table Responsive Guard */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+        }
+        .table th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            background-color: #f8fafc;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        .table td {
+            padding: 16px 20px;
+            font-size: 0.85rem;
+            color: #334155;
+            vertical-align: middle;
+        }
+        tr.active-row {
+            background-color: #f1f5f9 !important;
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        /* Status Pills */
+        .badge-pill-custom {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 30px;
+            display: inline-block;
+            white-space: nowrap;
+        }
+        .stock-healthy { background-color: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+        .stock-reorder { background-color: #fff0e6; color: #d97706; border: 1px solid #fed7aa; }
+        .stock-critical { background-color: #fdf2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+        .color-preview-dot {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(0,0,0,0.15);
+            vertical-align: middle;
+        }
+
+        .btn-link-action {
+            color: var(--accent-blue);
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            background: transparent;
+            border: none;
+            padding: 0;
+            transition: color 0.2s;
+        }
+        .btn-link-action:hover {
+            color: #1d4ed8;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="d-flex w-100 align-items-stretch">
+        <div class="main-content">
+            
+            <!-- Header Section -->
+            <div class="mb-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h4 class="fw-bold m-0">Inventory Stock Hub</h4>
+                    <p class="text-muted small m-0 mt-1">Monitor real-time stock quantities, manage boundaries, and analyze dynamic variant workflows seamlessly.</p>
+                </div>
+                <div>
+                    <a class="btn btn-outline-secondary btn-sm py-2 px-3 me-2" href="/PurchaseOrders/Index" style="border-radius:6px; font-weight:500; font-size: 0.85rem;">
+                        <i class="fa-solid fa-file-invoice-dollar me-1"></i> Purchase Orders Terminal
+                    </a>
+                    <a class="btn btn-outline-secondary btn-sm py-2 px-3 me-2" href="/Product/Index" style="border-radius:6px; font-weight:500; font-size: 0.85rem;">
+                        <i class="fa-solid fa-box me-1"></i> Product Studio
+                    </a>
+                </div>
+            </div>
+
+            <!-- Threshold Boundary Adjustment Panel -->
+            <div class="collapse mb-4" id="thresholdAdjustmentFormCollapse">
+                <div class="content-card border-primary" style="background-color: #f8fafc;">
+                    <div class="card-title-bar bg-white text-primary small text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+                        <i class="fa-solid fa-sliders me-1"></i> Adjust Safety Reorder Boundary Limit
+                    </div>
+                    <div class="p-4">
+                        <form id="thresholdForm">
+                            <div class="row g-3 align-items-end">
+                                <div class="col-md-6 col-12">
+                                    <label class="form-label small fw-semibold">Selected Product Variant SKU</label>
+                                    <input type="text" id="adjustVariantSKUDisplay" class="form-control form-control-sm bg-light fw-semibold text-secondary" readonly value="No SKU Selected">
+                                </div>
+                                <div class="col-md-4 col-sm-8 col-12">
+                                    <label class="form-label small fw-semibold">New Reorder Threshold Level</label>
+                                    <input type="number" id="adjustThresholdInput" class="form-control form-control-sm" value="15" min="0">
+                                </div>
+                                <div class="col-md-2 col-sm-4 col-12">
+                                    <button type="button" id="submitThresholdBtn" class="btn btn-custom-dark btn-sm w-100 fw-medium py-2">Save Limit</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Balanced Master-Detail System Grid Layout -->
+            <div class="row g-4">
+                
+                <!-- Left Panel: Main Summary Catalog -->
+                <div class="col-xl-7 col-lg-12">
+                    <div class="content-card">
+                        <div class="card-title-bar d-flex justify-content-between align-items-center">
+                            <span>Central Product Inventory Matrix</span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle m-0">
+                                <thead>
+                                    <tr>
+                                        <th>Product Identity</th>
+                                        <th>Base SKU Reference</th>
+                                        <th class="text-center">Cumulative Stock</th>
+                                        <th>Operational Alert</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="productCatalogStockBody">
+                                    <!-- Populated Dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Panel: Variant Breakdown -->
+                <div class="col-xl-5 col-lg-12">
+                    <div class="content-card">
+                        <div class="card-title-bar d-flex align-items-center gap-2">
+                            <span class="color-preview-dot" style="background-color: var(--accent-blue);"></span>
+                            <span>Relational Variant Breakdown Sheet</span>
+                        </div>
+                        <div class="p-4 bg-white">
+                            <div class="mb-3">
+                                <span class="text-uppercase text-secondary fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Active Inspections</span>
+                                <h5 class="fw-bold m-0 mt-1 text-dark" id="selectedProductNameDisplay">---</h5>
+                            </div>
+                            <hr class="text-muted opacity-20">
+                            <div id="variantLiveContainer" class="d-flex flex-column gap-3">
+                                <!-- Injected Dynamically via Script Engine -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </div>
+
+    <!-- JavaScript Data Layer Application Architecture -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/js/site.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            if (window.renderInventoryCatalogTable) {
+                window.renderInventoryCatalogTable();
+            }
+
+            const tbody = document.getElementById("productCatalogStockBody");
+            if (tbody) {
+                tbody.addEventListener("click", (e) => {
+                    const rowElement = e.target.closest("tr");
+                    if (!rowElement) return;
+                    const selectedProdId = parseInt(rowElement.getAttribute("data-product-id"));
+                    
+                    // Highlight active row immediately in UI
+                    document.querySelectorAll("#productCatalogStockBody tr").forEach(r => r.classList.remove("active-row"));
+                    rowElement.classList.add("active-row");
+
+                    if (window.syncVariantBreakdownPanel) {
+                        window.syncVariantBreakdownPanel(selectedProdId);
+                    }
+                });
+            }
+
+            const submitBtn = document.getElementById("submitThresholdBtn");
+            if (submitBtn) {
+                submitBtn.addEventListener("click", async () => {
+                    const targetingSku = document.getElementById("adjustVariantSKUDisplay").value;
+                    const targetThresholdValue = parseInt(document.getElementById("adjustThresholdInput").value) || 0;
+
+                    try {
+                        const response = await fetch("/api/inventory/threshold", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({ sku: targetingSku, threshold: targetThresholdValue })
+                        });
+
+                        if (!response.ok) throw new Error("Failed to update threshold.");
+
+                        // Instantly re-render components together to reflect real-time update instantly
+                        if (window.renderInventoryCatalogTable) {
+                            await window.renderInventoryCatalogTable();
+                        }
+                        
+                        const formCollapseElement = document.getElementById('thresholdAdjustmentFormCollapse');
+                        const bsCollapse = bootstrap.Collapse.getInstance(formCollapseElement);
+                        if (bsCollapse) bsCollapse.hide();
+                    } catch (error) {
+                        console.error("Error saving threshold:", error);
+                        alert("Error saving threshold limit: " + error.message);
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
