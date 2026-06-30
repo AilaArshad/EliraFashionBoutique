@@ -1,0 +1,6 @@
+@EliraFashionBotiqueWebAPI_HostAddress = http://localhost:5202
+
+GET {{EliraFashionBotiqueWebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

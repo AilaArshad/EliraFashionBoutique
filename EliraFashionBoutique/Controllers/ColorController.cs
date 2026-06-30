@@ -49,7 +49,7 @@ public class ColorController : Controller
                 var existing = await _colorRepository.GetByIdAsync(color.ColorId);
                 if (existing == null)
                 {
-                    return Json(new { success = false, message = "Color not found." });
+                    return Json(new { success = false, message = "Color not found" });
                 }
                 existing.ColorName = color.ColorName;
                 existing.HexCode = color.HexCode;
