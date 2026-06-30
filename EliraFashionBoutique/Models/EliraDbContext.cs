@@ -26,6 +26,9 @@ public class EliraDbContext : DbContext
     public virtual DbSet<Order> Orders { get; set; }
     public virtual DbSet<OrderItem> OrderItems { get; set; }
     public virtual DbSet<Payment> Payments { get; set; }
+    public virtual DbSet<ReturnOrder> ReturnOrders { get; set; }
+    public virtual DbSet<ReturnItem> ReturnItems { get; set; }
+    public virtual DbSet<Refund> Refunds { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -277,5 +280,53 @@ public class EliraDbContext : DbContext
                 .HasForeignKey<Payment>(d => d.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
+
+        modelBuilder.Entity<ReturnOrder>(entity =>
+        {
+            entity.HasKey(e => e.ReturnId);
+            entity.Property(e => e.ReturnStatus).HasMaxLength(50).HasDefaultValue("Pending");
+
+            entity.HasOne(d => d.Order)
+                .WithMany()
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<ReturnItem>(entity =>
+        {
+            entity.HasKey(e => e.ReturnItemId);
+            entity.Property(e => e.ResolutionType).HasMaxLength(100).HasDefaultValue("Full Refund to Bank");
+
+            entity.HasOne(d => d.ReturnOrder)
+                .WithMany(p => p.ReturnItems)
+                .HasForeignKey(d => d.ReturnId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.OrderItem)
+                .WithMany()
+                .HasForeignKey(d => d.OrderItemId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Refund>(entity =>
+        {
+            entity.HasKey(e => e.RefundId);
+            entity.Property(e => e.RefundAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.RefundMethod).HasMaxLength(50).HasDefaultValue("Bank Transfer");
+            entity.Property(e => e.RefundStatus).HasMaxLength(50);
+            entity.Property(e => e.BankName).HasMaxLength(100);
+            entity.Property(e => e.BankAccountNumber).HasMaxLength(50);
+
+            entity.HasOne(d => d.ReturnOrder)
+                .WithMany()
+                .HasForeignKey(d => d.ReturnId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(d => d.Payment)
+                .WithMany()
+                .HasForeignKey(d => d.PaymentId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
     }
 }
+

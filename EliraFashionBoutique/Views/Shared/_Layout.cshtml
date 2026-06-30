@@ -90,8 +90,8 @@
             </li>
 
             <li class="sidebar-nav-item">
-                <a href="#"
-                   class="sidebar-nav-link"
+                <a href="/Returns/Index"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Returns" ? "active" : "")"
                    data-tooltip="Returns & Refunds">
                     <i class="fa-solid fa-rotate-left nav-icon"></i>
                     <span class="nav-label">Returns & Refunds</span>

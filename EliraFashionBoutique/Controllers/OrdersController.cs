@@ -183,6 +183,21 @@ public class OrdersController : Controller
 
                 _context.OrderItems.Add(orderItem);
 
+                // Deduct inventory stock quantity
+                var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.VariantId == itemInput.VariantId);
+                if (inventory != null)
+                {
+                    if (inventory.QuantityAvailable < itemInput.Quantity)
+                    {
+                        throw new Exception($"Insufficient stock for variant. Available: {inventory.QuantityAvailable}, Requested: {itemInput.Quantity}");
+                    }
+                    inventory.QuantityAvailable -= itemInput.Quantity;
+                }
+                else
+                {
+                    throw new Exception($"Inventory record not found for variant ID {itemInput.VariantId}.");
+                }
+
                 totalAmount += (unitPrice * itemInput.Quantity);
                 totalItemDiscounts += itemInput.DiscountedAmount;
             }
