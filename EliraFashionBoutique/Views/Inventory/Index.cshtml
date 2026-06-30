@@ -1,41 +1,15 @@
 @{
+    ViewData["Title"] = "Inventory Stock Hub";
     Layout = "_Layout";
 }
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Elira Boutique - Inventory Central Hub</title>
-    <!-- Bootstrap & Professional Fonts -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+@section Styles {
     <style>
         :root {
-            --text-dark: #0f172a;
-            --text-muted: #64748b;
-            --border-color: #e2e8f0;
-            --body-bg: #f8fafc;
-            
             /* Dark Navy Theme Styling */
             --btn-dark-navy: #1b223c;
             --btn-dark-navy-hover: #12182c;
             --accent-blue: #3b82f6;
-        }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--body-bg);
-            color: var(--text-dark);
-            overflow-x: hidden;
-        }
-        
-        .main-content {
-            padding: 2rem;
-            width: 100%;
-            flex-grow: 1;
-            min-width: 0;
         }
 
         /* Clean Content Box Panels */
@@ -45,6 +19,7 @@
             border-radius: 8px;
             margin-bottom: 24px;
             box-shadow: 0 1px 2px rgba(0,0,0,0.01);
+            width: 100%;
         }
         .card-title-bar {
             padding: 16px 20px;
@@ -132,101 +107,92 @@
             text-decoration: underline;
         }
     </style>
-</head>
-<body>
+}
 
-    <div class="d-flex w-100 align-items-stretch">
-        <div class="main-content">
-            
-            <!-- Header Section -->
-            <div class="mb-4 d-flex justify-content-between align-items-center">
-                <div>
-                    <h4 class="fw-bold m-0">Inventory Stock Hub</h4>
-                    <p class="text-muted small m-0 mt-1">Monitor real-time stock quantities, manage boundaries, and analyze dynamic variant workflows seamlessly.</p>
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Inventory Stock Hub</h1>
+        <p class="page-subtitle">Monitor real-time stock quantities, manage boundaries, and analyze dynamic variant workflows seamlessly.</p>
+    </div>
+</div>
+
+<!-- Threshold Boundary Adjustment Panel -->
+<div class="collapse mb-4" id="thresholdAdjustmentFormCollapse">
+    <div class="content-card border-primary" style="background-color: #f8fafc;">
+        <div class="card-title-bar bg-white text-primary small text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
+            <i class="fa-solid fa-sliders me-1"></i> Adjust Safety Reorder Boundary Limit
+        </div>
+        <div class="p-4">
+            <form id="thresholdForm">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-6 col-12">
+                        <label class="form-label small fw-semibold">Selected Product Variant SKU</label>
+                        <input type="text" id="adjustVariantSKUDisplay" class="form-control form-control-sm bg-light fw-semibold text-secondary" readonly value="No SKU Selected">
+                    </div>
+                    <div class="col-md-4 col-sm-8 col-12">
+                        <label class="form-label small fw-semibold">New Reorder Threshold Level</label>
+                        <input type="number" id="adjustThresholdInput" class="form-control form-control-sm" value="15" min="0">
+                    </div>
+                    <div class="col-md-2 col-sm-4 col-12">
+                        <button type="button" id="submitThresholdBtn" class="btn btn-custom-dark btn-sm w-100 fw-medium py-2">Save Limit</button>
+                    </div>
                 </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Balanced Master-Detail System Grid Layout -->
+<div class="row g-4">
+    
+    <!-- Left Panel: Main Summary Catalog -->
+    <div class="col-xl-7 col-lg-12">
+        <div class="content-card">
+            <div class="card-title-bar d-flex justify-content-between align-items-center">
+                <span>Central Product Inventory Matrix</span>
             </div>
-
-            <!-- Threshold Boundary Adjustment Panel -->
-            <div class="collapse mb-4" id="thresholdAdjustmentFormCollapse">
-                <div class="content-card border-primary" style="background-color: #f8fafc;">
-                    <div class="card-title-bar bg-white text-primary small text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 0.5px;">
-                        <i class="fa-solid fa-sliders me-1"></i> Adjust Safety Reorder Boundary Limit
-                    </div>
-                    <div class="p-4">
-                        <form id="thresholdForm">
-                            <div class="row g-3 align-items-end">
-                                <div class="col-md-6 col-12">
-                                    <label class="form-label small fw-semibold">Selected Product Variant SKU</label>
-                                    <input type="text" id="adjustVariantSKUDisplay" class="form-control form-control-sm bg-light fw-semibold text-secondary" readonly value="No SKU Selected">
-                                </div>
-                                <div class="col-md-4 col-sm-8 col-12">
-                                    <label class="form-label small fw-semibold">New Reorder Threshold Level</label>
-                                    <input type="number" id="adjustThresholdInput" class="form-control form-control-sm" value="15" min="0">
-                                </div>
-                                <div class="col-md-2 col-sm-4 col-12">
-                                    <button type="button" id="submitThresholdBtn" class="btn btn-custom-dark btn-sm w-100 fw-medium py-2">Save Limit</button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle m-0">
+                    <thead>
+                        <tr>
+                            <th>Product Identity</th>
+                            <th>Base SKU Reference</th>
+                            <th class="text-center">Cumulative Stock</th>
+                            <th>Operational Alert</th>
+                        </tr>
+                    </thead>
+                    <tbody id="productCatalogStockBody">
+                        <!-- Populated Dynamically -->
+                    </tbody>
+                </table>
             </div>
-
-            <!-- Balanced Master-Detail System Grid Layout -->
-            <div class="row g-4">
-                
-                <!-- Left Panel: Main Summary Catalog -->
-                <div class="col-xl-7 col-lg-12">
-                    <div class="content-card">
-                        <div class="card-title-bar d-flex justify-content-between align-items-center">
-                            <span>Central Product Inventory Matrix</span>
-                        </div>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle m-0">
-                                <thead>
-                                    <tr>
-                                        <th>Product Identity</th>
-                                        <th>Base SKU Reference</th>
-                                        <th class="text-center">Cumulative Stock</th>
-                                        <th>Operational Alert</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="productCatalogStockBody">
-                                    <!-- Populated Dynamically -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Right Panel: Variant Breakdown -->
-                <div class="col-xl-5 col-lg-12">
-                    <div class="content-card">
-                        <div class="card-title-bar d-flex align-items-center gap-2">
-                            <span class="color-preview-dot" style="background-color: var(--accent-blue);"></span>
-                            <span>Relational Variant Breakdown Sheet</span>
-                        </div>
-                        <div class="p-4 bg-white">
-                            <div class="mb-3">
-                                <span class="text-uppercase text-secondary fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Active Inspections</span>
-                                <h5 class="fw-bold m-0 mt-1 text-dark" id="selectedProductNameDisplay">---</h5>
-                            </div>
-                            <hr class="text-muted opacity-20">
-                            <div id="variantLiveContainer" class="d-flex flex-column gap-3">
-                                <!-- Injected Dynamically via Script Engine -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-
         </div>
     </div>
 
-    <!-- JavaScript Data Layer Application Architecture -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="/js/site.js"></script>
+    <!-- Right Panel: Variant Breakdown -->
+    <div class="col-xl-5 col-lg-12">
+        <div class="content-card">
+            <div class="card-title-bar d-flex align-items-center gap-2">
+                <span class="color-preview-dot" style="background-color: var(--accent-blue);"></span>
+                <span>Relational Variant Breakdown Sheet</span>
+            </div>
+            <div class="p-4 bg-white">
+                <div class="mb-3">
+                    <span class="text-uppercase text-secondary fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Active Inspections</span>
+                    <h5 class="fw-bold m-0 mt-1 text-dark" id="selectedProductNameDisplay">---</h5>
+                </div>
+                <hr class="text-muted opacity-20">
+                <div id="variantLiveContainer" class="d-flex flex-column gap-3">
+                    <!-- Injected Dynamically via Script Engine -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    <script src="~/js/site.js" asp-append-version="true"></script>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
             if (window.renderInventoryCatalogTable) {
@@ -283,5 +249,4 @@
             }
         });
     </script>
-</body>
-</html>
+}

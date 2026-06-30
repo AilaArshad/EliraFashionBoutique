@@ -1,0 +1,567 @@
+@{
+    ViewData["Title"] = "Reverse Logistics Console";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        .table-status-select { 
+            width: 140px;
+            display: inline-block;
+            padding: 0.4rem 1.8rem 0.4rem 0.75rem; 
+            border-radius: 20px; 
+            font-weight: 600; 
+            font-size: 0.75rem; 
+            border: 1px solid transparent; 
+            outline: none; 
+            cursor: pointer;
+            appearance: none; 
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-repeat: no-repeat;
+            background-position: right 0.6rem center;
+            background-size: 0.7rem;
+            transition: all 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .status-pending { 
+            background-color: #fef9c3; color: #713f12; border-color: #fde047; 
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23713f12' stroke-width='3'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19.5 8.25l-7.5 7.5-7.5-7.5'/%3E%3C/svg%3E");
+        }
+        
+        .table-status-label {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .status-approved { 
+            background-color: #e6f4ea; color: #137333; border: 1px solid #ceead6;
+        }
+        .status-rejected { 
+            background-color: #fdf2f2; color: #b91c1c; border: 1px solid #fecaca;
+        }
+
+        .meta-card { 
+            background: #ffffff; 
+            border: 1px solid var(--border-color); 
+            padding: 1.25rem; 
+            border-radius: 8px; 
+            box-shadow: var(--shadow-xs); 
+        }
+        .meta-line { 
+            display: flex; 
+            justify-content: space-between; 
+            padding: 0.55rem 0; 
+            border-bottom: 1px dashed var(--border-light); 
+            font-size: 0.85rem; 
+            align-items: center; 
+            gap: 0.5rem; 
+        }
+        .meta-line:last-child { border-bottom: none; }
+        .meta-line strong { color: var(--text-muted); font-weight: 500; }
+        .meta-line span { color: var(--text-dark); font-weight: 600; text-align: right; }
+
+        .audit-icon { 
+            width: 36px; 
+            height: 36px; 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 0.95rem; 
+            flex-shrink: 0; 
+            transition: all 0.25s ease;
+        }
+        .node-pending { background: #fde047; color: #713f12; box-shadow: 0 0 0 4px #fef9c3; }
+        .node-approved { background: #22c55e; color: white; box-shadow: 0 0 0 4px #e6f4ea; }
+        .node-rejected { background: #ef4444; color: white; box-shadow: 0 0 0 4px #fdf2f2; }
+
+        .reason-cell {
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        tr.active-row {
+            background-color: #f1f5f9 !important;
+            border-left: 4px solid var(--elira-accent);
+        }
+    </style>
+}
+
+<div class="page-header d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="page-title">Reverse Logistics ERP</h1>
+        <p class="page-subtitle">Manage customer returns, bank refund settlements, and auto-restocking log trails.</p>
+    </div>
+    <button class="btn btn-elira-dark btn-sm px-3 py-2" id="btnLogClaim">
+        <i class="fa-solid fa-plus me-1"></i> Log New Return
+    </button>
+</div>
+
+<div class="row g-4">
+    <!-- Left Panel: Main Summary Catalog -->
+    <div class="col-xl-7 col-lg-12">
+        <div class="content-card">
+            <div class="card-title-bar d-flex justify-content-between align-items-center bg-light border-bottom">
+                <span class="fw-bold text-dark"><i class="fa-solid fa-rotate-left text-secondary me-2"></i>Return Orders Management Console</span>
+                <input type="text" id="claimSearch" class="form-control form-control-sm" placeholder="Search parameters..." style="width: 240px;">
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-hover align-middle m-0 elira-table" id="claimsTable">
+                    <thead>
+                        <tr>
+                            <th>Claim ID</th>
+                            <th>Order Ref</th>
+                            <th>Customer</th>
+                            <th>Return Date</th>
+                            <th>Resolution Type</th>
+                            <th>Custom Reason Text</th>
+                            <th>Refund</th>
+                            <th>Live Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Populated Dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Panel: Variant Breakdown or Log Return Form -->
+    <div class="col-xl-5 col-lg-12">
+        <div class="content-card p-4 bg-white" id="rightPanel">
+            
+            <div id="newClaimFormContainer" style="display: none;">
+                <h5 class="fw-bold text-dark pb-3 border-bottom d-flex justify-content-between align-items-center">
+                    <span><i class="fa-solid fa-file-invoice me-2 text-secondary"></i>Log Return Record</span>
+                    <button class="btn border-0 bg-transparent text-danger p-0" id="btnCancelForm"><i class="fa-solid fa-xmark" style="font-size: 1.2rem;"></i></button>
+                </h5>
+                
+                <div class="row g-3 mt-2">
+                    <div class="col-md-6 col-12">
+                        <label class="form-label small fw-semibold text-secondary">Claim Record ID</label>
+                        <input type="text" id="formClaimId" class="form-control form-control-sm bg-light" readonly>
+                    </div>
+                    <div class="col-md-6 col-12">
+                        <label class="form-label small fw-semibold text-secondary">Base Order Ref *</label>
+                        <select id="formOrderRef" class="form-select form-select-sm">
+                            <option value="">-- Select Order --</option>
+                            <!-- Populated Dynamically -->
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-secondary">Product & Variant *</label>
+                        <select id="formVariantItem" class="form-select form-select-sm" disabled>
+                            <option value="">-- Select Product / Variant --</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-secondary">Detailed Custom Return Reason *</label>
+                        <input type="text" id="formReasonText" class="form-control form-control-sm" placeholder="Type custom fault notes here...">
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label small fw-semibold text-secondary">Resolution Strategy</label>
+                        <input type="text" id="formResolutionType" class="form-control form-control-sm bg-light fw-bold" value="Full Refund to Bank" readonly style="color: var(--elira-navy);">
+                    </div>
+
+                    <div class="col-md-6 col-12">
+                        <label class="form-label small fw-semibold text-secondary">Select Bank *</label>
+                        <select id="formBankName" class="form-select form-select-sm">
+                            <option value="">-- Choose Bank --</option>
+                            <option value="Habib Bank Limited (HBL)">Habib Bank Limited (HBL)</option>
+                            <option value="Meezan Bank">Meezan Bank</option>
+                            <option value="Alfalah Bank">Alfalah Bank</option>
+                            <option value="Standard Chartered">Standard Chartered</option>
+                            <option value="Allied Bank (ABL)">Allied Bank (ABL)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 col-12">
+                        <label class="form-label small fw-semibold text-secondary">Bank Account Number / IBAN *</label>
+                        <input type="text" id="formBankAccount" class="form-control form-control-sm" placeholder="Enter account or IBAN...">
+                    </div>
+
+                    <div class="col-md-6 col-12">
+                        <label class="form-label small fw-semibold text-secondary">Original Paid (PKR)</label>
+                        <input type="number" id="formOriginalPrice" class="form-control form-control-sm bg-light" readonly>
+                    </div>
+                    <div class="col-md-6 col-12">
+                        <label class="form-label small fw-semibold text-secondary">Refund Value (PKR)</label>
+                        <input type="number" id="formRefund" class="form-control form-control-sm bg-light" readonly>
+                    </div>
+                </div>
+                <button class="btn btn-elira-dark btn-sm w-100 mt-4 py-2" id="btnExecuteReturn"><i class="fa-solid fa-server me-1"></i> Commit Record to System</button>
+            </div>
+
+            <div id="detailViewContainer">
+                <h5 class="fw-bold text-dark pb-3 border-bottom"><i class="fa-solid fa-circle-info me-2 text-secondary"></i>Metadata Operational Summary</h5>
+                
+                <div class="meta-card mt-3">
+                    <div class="meta-line"><strong>Tracking ID:</strong> <span id="lblClaimId">-</span></div>
+                    <div class="meta-line"><strong>Customer Profile:</strong> <span id="lblCustomer">-</span></div>
+                    <div class="meta-line"><strong>Return Lodged Date:</strong> <span id="lblDate">-</span></div>
+                    <div class="meta-line"><strong>Resolution Matrix:</strong> <span id="lblResolution">Full Refund to Bank</span></div>
+                    <div class="meta-line"><strong>Financial Gateway:</strong> <span id="lblGateway">-</span></div>
+                    <div class="meta-line" id="lblBankDetailsRow" style="display:none;"><strong>Bank Ledger:</strong> <span id="lblBankText">-</span></div>
+                    <div class="meta-line p-3 bg-light rounded" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+                        <strong>Custom Reason Log:</strong> 
+                        <span id="lblReason" style="font-style:italic; font-weight:400; color:var(--text-muted); text-align: left; max-width: 100%;">-</span>
+                    </div>
+                </div>
+                
+                <div class="audit-step mt-4 d-flex gap-3 align-items-start">
+                    <div class="audit-icon" id="lblAuditNode"><i class="fa-solid fa-clock-history"></i></div>
+                    <div class="audit-content p-3 bg-light rounded border flex-grow-1">
+                        <strong id="lblNodeTitle" class="text-dark d-block mb-1">Current Process Head: -</strong>
+                        <p id="lblNodeDesc" class="text-muted small mb-0">-</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script>
+        let claimInMemoryStateDB = [];
+        let activeClaimId = null;
+
+        document.addEventListener("DOMContentLoaded", () => {
+            loadReturnsList();
+
+            // Wire Row Click Selector
+            document.getElementById('tableBody').addEventListener('click', function(e) {
+                if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') return;
+                
+                const row = e.target.closest('tr');
+                if (!row) return;
+
+                document.querySelectorAll('#claimsTable tbody tr').forEach(r => r.classList.remove('active-row'));
+                row.classList.add('active-row');
+
+                const id = row.getAttribute('data-claim');
+                activeClaimId = id;
+                renderRightPanelDetail(id);
+            });
+
+            // Wire Live Status Dropdown Updates
+            document.getElementById('tableBody').addEventListener('change', async function(e) {
+                if (!e.target.classList.contains('table-status-select')) return;
+
+                const dropdown = e.target;
+                const targetValue = dropdown.value;
+                const returnId = dropdown.getAttribute('data-id');
+                const claimId = dropdown.getAttribute('data-claim');
+
+                if (targetValue === "Pending Audit") return;
+
+                try {
+                    const response = await fetch(`/api/Returns/${returnId}/status`, {
+                        method: "PATCH",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({ status: targetValue })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error("Failed to update status.");
+                    }
+
+                    // Complete state-locking UI logic: Hide select element immediately, replace with badge label.
+                    const parentCell = dropdown.parentElement;
+                    parentCell.innerHTML = ""; // Clear select dropdown
+                    
+                    const badgeClass = targetValue === "Approved" ? "status-approved" : "status-rejected";
+                    const badgeSpan = document.createElement("span");
+                    badgeSpan.className = `table-status-label ${badgeClass}`;
+                    badgeSpan.innerText = targetValue;
+                    parentCell.appendChild(badgeSpan);
+
+                    if (window.showToast) {
+                        window.showToast(`Return claim status updated to ${targetValue} successfully!`, "success");
+                    } else {
+                        alert(`Return status updated to ${targetValue} successfully!`);
+                    }
+
+                    // Reload the dataset to synchronize inspector summary panels
+                    await loadReturnsList(claimId);
+                } catch (err) {
+                    console.error("Error updating status:", err);
+                    alert("Error updating status: " + err.message);
+                    dropdown.value = "Pending Audit";
+                }
+            });
+
+            // Wire Search Input Parameter filtering
+            document.getElementById('claimSearch').addEventListener('keyup', function(e) {
+                const q = e.target.value.toLowerCase();
+                document.querySelectorAll('#tableBody tr').forEach(r => {
+                    r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+                });
+            });
+
+            // Wire Log Return Button
+            document.getElementById('btnLogClaim').addEventListener('click', async function() {
+                document.querySelectorAll('#claimsTable tbody tr').forEach(r => r.classList.remove('active-row'));
+                document.getElementById('detailViewContainer').style.display = 'none';
+
+                // Populate Order Refs list dropdown dynamically
+                try {
+                    const response = await fetch("/api/Returns/eligible-orders");
+                    const orders = await response.json();
+                    
+                    const orderSelect = document.getElementById("formOrderRef");
+                    orderSelect.innerHTML = '<option value="">-- Select Order --</option>';
+                    orders.forEach(o => {
+                        orderSelect.innerHTML += `<option value="${o.orderId}">${o.orderRef} (${o.customerName})</option>`;
+                    });
+                } catch (err) {
+                    console.error("Error loading eligible orders:", err);
+                }
+
+                // Auto-evaluate temporary counter sequence next RET claim ID
+                let nextNum = 1;
+                if (claimInMemoryStateDB.length > 0) {
+                    const ids = claimInMemoryStateDB.map(c => c.returnId);
+                    nextNum = Math.max(...ids) + 1;
+                }
+                document.getElementById('formClaimId').value = 'RET-2026-' + String(nextNum).padStart(4, '0');
+                
+                document.getElementById('formOrderRef').value = '';
+                document.getElementById('formVariantItem').innerHTML = '<option value="">-- Select Product / Variant --</option>';
+                document.getElementById('formVariantItem').disabled = true;
+                document.getElementById('formReasonText').value = '';
+                document.getElementById('formOriginalPrice').value = '';
+                document.getElementById('formRefund').value = '';
+                document.getElementById('formBankName').value = "";
+                document.getElementById('formBankAccount').value = "";
+
+                document.getElementById('newClaimFormContainer').style.display = 'block';
+            });
+
+            // Wire Cancel Action button
+            document.getElementById('btnCancelForm').addEventListener('click', function() {
+                document.getElementById('newClaimFormContainer').style.display = 'none';
+                const firstRow = document.querySelector('#tableBody tr');
+                if(firstRow) firstRow.click();
+            });
+
+            // Base Order Selection Cascade change mapping
+            document.getElementById('formOrderRef').addEventListener('change', async function(e) {
+                const orderId = e.target.value;
+                const vSelect = document.getElementById('formVariantItem');
+                document.getElementById('formOriginalPrice').value = '';
+                document.getElementById('formRefund').value = '';
+                
+                if(!orderId) { vSelect.disabled = true; return; }
+
+                vSelect.innerHTML = '<option value="">-- Loading items... --</option>';
+                vSelect.disabled = true;
+
+                try {
+                    const response = await fetch(`/api/Returns/orders/${orderId}/items`);
+                    const items = await response.json();
+                    
+                    vSelect.innerHTML = '<option value="">-- Select Product / Variant --</option>';
+                    items.forEach(item => {
+                        vSelect.innerHTML += `<option value="${item.orderItemId}" data-price="${item.price}">${item.productName} (${item.sku})</option>`;
+                    });
+                    vSelect.disabled = false;
+                } catch (err) {
+                    console.error("Error fetching order items:", err);
+                    vSelect.innerHTML = '<option value="">-- Error loading items --</option>';
+                }
+            });
+
+            // Variant Item change selection
+            document.getElementById('formVariantItem').addEventListener('change', function(e) {
+                const selectedOption = e.target.options[e.target.selectedIndex];
+                if(!selectedOption || !selectedOption.value) {
+                    document.getElementById('formOriginalPrice').value = '';
+                    document.getElementById('formRefund').value = '';
+                    return;
+                }
+
+                const price = selectedOption.getAttribute('data-price');
+                document.getElementById('formOriginalPrice').value = price;
+                document.getElementById('formRefund').value = price;
+            });
+
+            // Commit Record button execute trigger
+            document.getElementById('btnExecuteReturn').addEventListener('click', async function() {
+                const orderId = document.getElementById('formOrderRef').value;
+                const orderItemId = document.getElementById('formVariantItem').value;
+                const reasonText = document.getElementById('formReasonText').value;
+                const bankNameVal = document.getElementById('formBankName').value;
+                const bankAccountVal = document.getElementById('formBankAccount').value;
+
+                if(!orderId || !orderItemId || !reasonText.trim() || !bankNameVal || !bankAccountVal.trim()) {
+                    alert("Database Constraint Error: Fill all required fields including Bank Details!");
+                    return;
+                }
+
+                const payload = {
+                    orderId: parseInt(orderId),
+                    orderItemId: parseInt(orderItemId),
+                    quantityReturned: 1,
+                    customReasonText: reasonText.trim(),
+                    returnedCondition: "Damaged",
+                    bankName: bankNameVal,
+                    bankAccountNumber: bankAccountVal.trim()
+                };
+
+                try {
+                    const response = await fetch("/api/Returns", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        throw new Error(err.detail || "Failed to commit return record.");
+                    }
+
+                    const result = await response.json();
+                    
+                    if (window.showToast) {
+                        window.showToast("Record verified and added safely.", "success");
+                    } else {
+                        alert("Record verified and added safely.");
+                    }
+
+                    document.getElementById('newClaimFormContainer').style.display = 'none';
+                    await loadReturnsList(result.claimId);
+                } catch (error) {
+                    console.error("Error creating return:", error);
+                    alert("Database Constraint Error: " + error.message);
+                }
+            });
+        });
+
+        async function loadReturnsList(selectClaimId = null) {
+            try {
+                const response = await fetch("/api/Returns");
+                claimInMemoryStateDB = await response.json();
+                
+                const tbody = document.getElementById("tableBody");
+                tbody.innerHTML = "";
+                
+                if (claimInMemoryStateDB.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="8" class="text-center py-4 text-muted small">No return claims logged.</td></tr>`;
+                    return;
+                }
+                
+                claimInMemoryStateDB.forEach(item => {
+                    const tr = document.createElement("tr");
+                    tr.setAttribute("data-claim", item.claimId);
+                    tr.setAttribute("data-id", item.returnId);
+                    
+                    if (activeClaimId === item.claimId || (selectClaimId && selectClaimId === item.claimId)) {
+                        tr.classList.add("active-row");
+                        activeClaimId = item.claimId;
+                    }
+                    
+                    let statusHtml = "";
+                    if (item.returnStatus === "Approved" || item.returnStatus === "Rejected") {
+                        const badgeClass = item.returnStatus === "Approved" ? "status-approved" : "status-rejected";
+                        statusHtml = `<span class="table-status-label ${badgeClass}">${item.returnStatus}</span>`;
+                    } else {
+                        statusHtml = `
+                            <select class="table-status-select status-pending" data-claim="${item.claimId}" data-id="${item.returnId}">
+                                <option value="Pending Audit" ${item.returnStatus === "Pending Audit" ? "selected" : ""}>Pending Audit</option>
+                                <option value="Approved" ${item.returnStatus === "Approved" ? "selected" : ""}>Approved</option>
+                                <option value="Rejected" ${item.returnStatus === "Rejected" ? "selected" : ""}>Rejected</option>
+                            </select>
+                        `;
+                    }
+                    
+                    tr.innerHTML = `
+                        <td><strong>${item.claimId}</strong></td>
+                        <td>${item.orderRef}</td>
+                        <td>${item.customerName}</td>
+                        <td>${item.returnDate}</td>
+                        <td>${item.resolutionType}</td>
+                        <td class="reason-cell" title="${item.customReasonText}">${item.customReasonText}</td>
+                        <td>${item.refundAmountFormatted}</td>
+                        <td class="status-cell">${statusHtml}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                if (activeClaimId) {
+                    renderRightPanelDetail(activeClaimId);
+                } else {
+                    const firstRow = document.querySelector("#tableBody tr");
+                    if (firstRow) {
+                        firstRow.click();
+                    }
+                }
+            } catch (err) {
+                console.error("Error loading returns list:", err);
+            }
+        }
+
+        function renderRightPanelDetail(claimId) {
+            const data = claimInMemoryStateDB.find(item => item.claimId === claimId);
+            if (!data) return;
+
+            document.getElementById('newClaimFormContainer').style.display = 'none';
+            document.getElementById('detailViewContainer').style.display = 'block';
+
+            document.getElementById('lblClaimId').innerText = data.claimId;
+            document.getElementById('lblCustomer').innerText = data.customerName;
+            document.getElementById('lblDate').innerText = data.returnDate;
+            document.getElementById('lblResolution').innerText = data.resolutionType;
+            document.getElementById('lblReason').innerText = data.customReasonText;
+            
+            const bankRow = document.getElementById('lblBankDetailsRow');
+            if (data.bankName && data.bankName !== "-") {
+                bankRow.style.display = 'flex';
+                document.getElementById('lblBankText').innerText = `${data.bankName} - ${data.bankAccount}`;
+            } else {
+                bankRow.style.display = 'none';
+            }
+
+            const gate = document.getElementById('lblGateway');
+            gate.innerText = data.paymentStatus;
+            if(data.returnStatus === "Approved") gate.style.color = "var(--success)";
+            else if(data.returnStatus === "Rejected") gate.style.color = "var(--danger)";
+            else gate.style.color = "var(--warning)";
+
+            document.getElementById('lblNodeTitle').innerText = "Current Process Head: " + data.returnStatus;
+            
+            const nodeCircle = document.getElementById('lblAuditNode');
+            nodeCircle.className = "audit-icon"; 
+            
+            let desc = "";
+            if(data.returnStatus === "Pending Audit") {
+                desc = "Package reached warehouse center. Awaiting physical verification confirmation from the master dropdown menu matrix selection loops.";
+                nodeCircle.classList.add('node-pending');
+            }
+            else if(data.returnStatus === "Approved") {
+                desc = "Quality check cleared. Item routed to safe warehouse restocking shelves. Awaiting disbursement settlement.";
+                nodeCircle.classList.add('node-approved');
+            }
+            else if(data.returnStatus === "Rejected") {
+                desc = "Return verification claim rejected by inspector panel. Item locked from asset recovery paths.";
+                nodeCircle.classList.add('node-rejected');
+            }
+            document.getElementById('lblNodeDesc').innerText = desc;
+        }
+    </script>
+}
