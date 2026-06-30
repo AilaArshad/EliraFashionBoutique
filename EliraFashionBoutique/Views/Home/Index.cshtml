@@ -1,8 +1,295 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@model EliraFashionBoutique.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Executive Operations Dashboard";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+@section Styles {
+    <style>
+        :root {
+            --text-dark: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --body-bg: #f8fafc;
+            
+            /* Core Theme Colors */
+            --btn-dark-navy: #1b223c;
+            --btn-dark-navy-hover: #12182c;
+            --accent-blue: #3b82f6;
+        }
+
+        /* Workspace Adjustment Layout (Full Width Viewport) */
+        .main-content {
+            padding: 1rem 0;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Metrics Widget Boxes */
+        .stat-widget {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 24px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.01);
+            height: 100%;
+        }
+        .stat-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Dashboard Data Blocks */
+        .dashboard-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 24px;
+        }
+        .card-header-bar {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #fff;
+            font-weight: 600;
+        }
+
+        /* Clean Data Tables Architecture */
+        .table th {
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            background-color: #f8fafc;
+            padding: 14px 20px;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+        .table td {
+            padding: 14px 20px;
+            font-size: 0.85rem;
+            color: #334155;
+            vertical-align: middle;
+            white-space: nowrap;
+        }
+
+        /* Status Pills Setup */
+        .status-pill {
+            font-size: 0.72rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 30px;
+            display: inline-block;
+        }
+        .pill-success { background-color: #e6f4ea; color: #137333; border: 1px solid #ceead6; }
+        .pill-pending { background-color: #fef7e0; color: #b06000; border: 1px solid #feebc8; }
+        .pill-danger { background-color: #fdf2f2; color: #b91c1c; border: 1px solid #fecaca; }
+
+        .btn-custom-dark {
+            background-color: var(--btn-dark-navy);
+            color: #ffffff;
+            border: 1px solid var(--btn-dark-navy);
+            font-size: 0.82rem;
+            font-weight: 500;
+        }
+        .btn-custom-dark:hover {
+            background-color: var(--btn-dark-navy-hover);
+            color: #ffffff;
+        }
+    </style>
+}
+
+<div class="main-content">
+    
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center border-bottom pb-4 mb-4 gap-3">
+        <div>
+            <h4 class="fw-bold m-0 text-dark">Boutique Executive Operations</h4>
+            <p class="text-muted small m-0 mt-1">Real-time business performance analytics directly mapped from your relational schema.</p>
+        </div>
+        <div class="text-md-end">
+            <span class="text-muted small d-block fw-medium text-uppercase" style="font-size: 0.68rem; letter-spacing: 0.5px;">Operational Sync Date</span>
+            <div class="fw-bold text-dark">
+                <i class="fa-regular fa-calendar-check me-1 text-primary"></i> 
+                @DateTime.Now.ToString("dddd, MMMM dd, yyyy")
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        
+        <!-- Gross Revenue Widget -->
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-widget d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Gross Revenue</span>
+                    <h3 class="fw-bold m-0 mt-1">PKR @Model.GrossRevenue.ToString("N2")</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">Calculated via <code>FinalAmount</code></small>
+                </div>
+                <div class="stat-icon-wrapper" style="background-color: #e0f2fe; color: #0369a1;"><i class="fa-solid fa-wallet fa-lg"></i></div>
+            </div>
+        </div>
+
+        <!-- Order Volumes Widget -->
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-widget d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Order Volumes</span>
+                    <h3 class="fw-bold m-0 mt-1">@Model.OrderVolume Orders</h3>
+                    <small class="text-muted" style="font-size: 0.72rem;">Includes Guest checkouts</small>
+                </div>
+                <div class="stat-icon-wrapper" style="background-color: #e6f4ea; color: #137333;"><i class="fa-solid fa-bag-shopping fa-lg"></i></div>
+            </div>
+        </div>
+
+        <!-- Registered Accounts Widget -->
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-widget d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Registered Accounts</span>
+                    <h3 class="fw-bold m-0 mt-1">@Model.RegisteredAccounts Profiles</h3>
+                    <small class="text-success fw-medium" style="font-size: 0.72rem;">
+                        <i class="fa-solid fa-check"></i> @Model.EmailVerificationPercentage% Email Verified
+                    </small>
+                </div>
+                <div class="stat-icon-wrapper" style="background-color: #fef3c7; color: #b45309;"><i class="fa-solid fa-users fa-lg"></i></div>
+            </div>
+        </div>
+
+        <!-- Reorder Alerts Widget -->
+        <div class="col-xl-3 col-md-6">
+            <div class="stat-widget d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small text-uppercase fw-bold" style="font-size: 0.65rem; letter-spacing: 0.5px;">Reorder Alerts</span>
+                    <h3 class="fw-bold m-0 mt-1 @(Model.ReorderAlerts > 0 ? "text-danger" : "text-success")">@Model.ReorderAlerts Variants</h3>
+                    @if (Model.ReorderAlerts > 0)
+                    {
+                        <small class="text-danger fw-medium" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-triangle-exclamation"></i> Action Required
+                        </small>
+                    }
+                    else
+                    {
+                        <small class="text-success fw-medium" style="font-size: 0.72rem;">
+                            <i class="fa-solid fa-circle-check"></i> Stock Levels Good
+                        </small>
+                    }
+                </div>
+                <div class="stat-icon-wrapper" style="background-color: #fde8e8; color: #9b1c1c;"><i class="fa-solid fa-warehouse fa-lg"></i></div>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="row g-4">
+        
+        <!-- Recent Customer Sales Ledger -->
+        <div class="col-xl-8 col-lg-12">
+            <div class="dashboard-card">
+                <div class="card-header-bar bg-white border-bottom">
+                    <div class="fw-bold text-dark">Recent Customer Sales Ledger</div>
+                    <p class="text-muted small m-0 mt-1" style="font-size: 0.78rem; font-weight: normal;">Monitors continuous sales flow incoming from the <code>Orders</code> relational schema table.</p>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle m-0">
+                        <thead>
+                            <tr>
+                                <th>Order Token</th>
+                                <th>Buyer Details</th>
+                                <th>Timestamp Log</th>
+                                <th class="text-end">Final Total</th>
+                                <th class="text-center">Order Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.RecentOrders == null || !Model.RecentOrders.Any())
+                            {
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted py-4">No recent sales found in the database.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var order in Model.RecentOrders)
+                                {
+                                    <tr>
+                                        <td>
+                                            <span class="font-monospace fw-bold text-dark bg-light px-2 py-1 border rounded">#ORD-@order.OrderId</span>
+                                        </td>
+                                        <td>
+                                            <div class="fw-bold text-dark">@(string.IsNullOrEmpty(order.CustomerName) ? "Guest Customer" : order.CustomerName)</div>
+                                            <small class="text-muted">@order.Email @(order.IsGuest ? "(Guest)" : "")</small>
+                                        </td>
+                                        <td class="text-muted small">@order.OrderDate.ToString("yyyy-MM-dd hh:mm tt")</td>
+                                        <td class="text-end fw-bold text-dark">PKR @order.FinalAmount.ToString("N2")</td>
+                                        <td class="text-center">
+                                            @if (order.Status == "Completed" || order.Status == "Delivered" || order.Status == "Shipped")
+                                            {
+                                                <span class="status-pill pill-success">@order.Status</span>
+                                            }
+                                            else if (order.Status == "Pending")
+                                            {
+                                                <span class="status-pill pill-pending">@order.Status</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="status-pill pill-danger">@order.Status</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Active Category Campaigns -->
+        <div class="col-xl-4 col-lg-12">
+            <div class="dashboard-card mb-4">
+                <div class="card-header-bar bg-white border-bottom">
+                    <div class="fw-bold text-dark">Active Category Campaigns</div>
+                    <p class="text-muted small m-0 mt-1" style="font-size: 0.75rem; font-weight: normal;">Live values running inside <code>Promotion</code> mapping.</p>
+                </div>
+                <div class="p-3 bg-white">
+                    <div class="d-flex flex-column gap-3">
+                        @if (Model.ActiveCampaigns == null || !Model.ActiveCampaigns.Any())
+                        {
+                            <div class="border rounded p-3 bg-light-subtle text-center text-muted">
+                                No active campaigns currently running.
+                            </div>
+                        }
+                        else
+                        {
+                            @foreach (var campaign in Model.ActiveCampaigns)
+                            {
+                                // Choose badge style class based on discount representation
+                                var isPercentage = campaign.PromotionDiscount.Contains("%") || campaign.PromotionDiscount.ToLower().Contains("off");
+                                var colorClass = isPercentage ? "danger" : "warning";
+                                var badgeClass = isPercentage 
+                                    ? "bg-danger-subtle text-danger border-danger-subtle" 
+                                    : "bg-warning-subtle text-warning-emphasis border-warning-subtle";
+
+                                <div class="border rounded p-3 bg-light-subtle">
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <strong style="font-size: 0.85rem;" class="text-dark">@campaign.DiscountName</strong>
+                                        <span class="badge @badgeClass font-monospace border" style="font-size: 0.7rem;">@campaign.PromotionDiscount</span>
+                                    </div>
+                                    <small class="text-muted d-block mb-2">Applied to: <strong>@campaign.AppliedTo</strong></small>
+                                    <div class="progress" style="height: 4px;">
+                                        <div class="progress-bar bg-@colorClass" role="progressbar" style="width: @campaign.ProgressPercentage%"></div>
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
 </div>

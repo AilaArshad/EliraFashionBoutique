@@ -1,4 +1,4 @@
 <Solution>
-  <Project Path="../../../source/repos/EliraFashionBotiqueWebAPI/EliraFashionBotiqueWebAPI.csproj" />
+  <Project Path="EliraFashionBotiqueWebAPI/EliraFashionBotiqueWebAPI.csproj" />
   <Project Path="EliraFashionBoutique/EliraFashionBoutique.csproj" />
 </Solution>
