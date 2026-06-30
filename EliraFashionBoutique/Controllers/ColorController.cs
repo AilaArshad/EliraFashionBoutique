@@ -1,9 +1,11 @@
 using EliraFashionBoutique.Models;
 using EliraFashionBoutique.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EliraFashionBoutique.Controllers;
 
+[Authorize]
 public class ColorController : Controller
 {
     private readonly IColorRepository _colorRepository;

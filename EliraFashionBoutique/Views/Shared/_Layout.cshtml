@@ -116,6 +116,19 @@
                     <span class="nav-label">Reports</span>
                 </a>
             </li>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <li class="sidebar-nav-item">
+                    <form asp-action="Logout" asp-controller="Account" method="post" id="logoutForm" style="display:none;"></form>
+                    <a href="javascript:void(0);" onclick="document.getElementById('logoutForm').submit();"
+                       class="sidebar-nav-link"
+                       data-tooltip="Sign Out">
+                        <i class="fa-solid fa-right-from-bracket nav-icon" style="color: #E0566F;"></i>
+                        <span class="nav-label" style="color: #E0566F;">Sign Out</span>
+                    </a>
+                </li>
+            }
         </ul>
 
         <!-- Collapse Toggle -->
