@@ -253,7 +253,7 @@ public class PurchaseOrdersController : Controller
             var newItemsToInsert = new List<PurchaseOrderItem>();
 
             // New manifest items from client
-            var incomingItems = input.ManifestItems;
+            var incomingItems = input.PurchaseOrderItems;
             var incomingVariantIds = incomingItems.Select(i => i.VariantId).ToHashSet();
 
             // 1. DELETE: Completely remove any rows from database that the user deleted on the UI
@@ -263,7 +263,7 @@ public class PurchaseOrdersController : Controller
             decimal calculatedTotal = 0;
 
             // 1. ADD & UPDATE DETECTOR LOOP
-            foreach (var itemInput in input.ManifestItems)
+            foreach (var itemInput in input.PurchaseOrderItems)
             {
                 var variant = await _context.ProductVariants.FindAsync(itemInput.VariantId);
                 if (variant == null)
@@ -322,8 +322,8 @@ public class PurchaseOrdersController : Controller
             }
 
             // 3. DELETE: Completely remove any rows from database that the user deleted on the UI
-            var itemsToDelete = existingItems.Where(item => !matchedExistingItems.Contains(item)).ToList();
-            foreach (var item in itemsToDelete)
+            var remainingItemsToDelete = existingItems.Where(item => !matchedExistingItems.Contains(item)).ToList();
+            foreach (var item in remainingItemsToDelete)
             {
                 order.PurchaseOrderItems.Remove(item);
                 _context.PurchaseOrderItems.Remove(item);

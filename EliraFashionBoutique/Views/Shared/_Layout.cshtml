@@ -63,20 +63,29 @@
             </li>
 
             <li class="sidebar-nav-item">
-                <a href="#"
-                   class="sidebar-nav-link"
-                   data-tooltip="Customer Orders">
+                <a href="/Orders/Index"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")"
+                   data-tooltip="Customer Order">
                     <i class="fa-solid fa-cart-shopping nav-icon"></i>
                     <span class="nav-label">Customer Orders</span>
                 </a>
             </li>
 
             <li class="sidebar-nav-item">
-                <a href="/"
+                <a href="/PurchaseOrders/Index"
                    class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PurchaseOrders" ? "active" : "")"
                    data-tooltip="Supplier Order Catalog">
                     <i class="fa-solid fa-truck nav-icon"></i>
                     <span class="nav-label">Supplier Orders</span>
+                </a>
+            </li>
+
+            <li class="sidebar-nav-item">
+                <a href="/Inventory/Index"
+                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "active" : "")"
+                   data-tooltip="Inventory Catalog">
+                    <i class="fa-solid fa-warehouse nav-icon"></i>
+                    <span class="nav-label">Inventory Stock</span>
                 </a>
             </li>
 

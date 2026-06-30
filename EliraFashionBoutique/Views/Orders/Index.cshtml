@@ -1,0 +1,959 @@
+@{
+    ViewData["Title"] = "Customer Order Ledger";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <style>
+        :root {
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --body-bg: #f8fafc;
+            --accent-color: #0f172a;
+            --accent-hover: #1e293b;
+        }
+        
+        .page-header {
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        .content-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+        .card-title-bar {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            background-color: #eaeded;
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        /* Master-Detail Interactive Rows */
+        .selectable-row {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .selectable-row:hover { background-color: #f8fafc !important; }
+        .selectable-row.is-selected {
+            background-color: #f0f4ff !important;
+            border-left: 4px solid var(--accent-color);
+        }
+        /* Tables Layout */
+        .table th {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            background-color: #f8fafc;
+            padding: 14px 20px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .table td {
+            padding: 16px 20px;
+            font-size: 0.88rem;
+            vertical-align: middle;
+            color: #334155;
+        }
+        /* Badges */
+        .status-badge {
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-pending { background-color: #fef3c7; color: #d97706; }
+        .status-shipped { background-color: #dbeafe; color: #1d4ed8; }
+        
+        .action-link-btn {
+            background: none; border: none; color: var(--accent-color);
+            font-weight: 600; font-size: 0.85rem; padding: 6px 12px;
+            border-radius: 6px; transition: all 0.2s ease;
+        }
+        .action-link-btn:hover { background-color: #eef2ff; color: var(--accent-hover); }
+
+        .nested-item-row {
+            background-color: #f8fafc; border: 1px solid #e2e8f0;
+            border-radius: 8px; padding: 14px; margin-bottom: 10px; font-size: 0.85rem;
+        }
+        .empty-state-panel {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            height: 350px; color: var(--text-muted); text-align: center; padding: 20px;
+        }
+        
+        /* ---------------- Place Order Workspace Panel Style ---------------- */
+        .view-pane { display: none; }
+        .view-pane.active-pane { display: block; animation: fadeInWorkspace 0.2s ease-in-out; }
+        @@keyframes fadeInWorkspace {
+            from { opacity: 0; } to { opacity: 1; }
+        }
+
+        .customer-meta-box {
+            background: #f1f5f9; border: 1px solid #cbd5e1;
+            border-radius: 6px; padding: 12px; min-height: 38px;
+            font-size: 0.88rem; color: #334155;
+        }
+        
+        .product-line-table { width: 100%; border-collapse: collapse; }
+        .product-line-table th {
+            font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
+            color: #334155; background-color: #e2e8f0; padding: 10px;
+            border: 1px solid var(--border-color); text-align: left;
+        }
+        .product-line-table td {
+            padding: 10px; border: 1px solid var(--border-color);
+            vertical-align: middle; font-size: 0.88rem;
+        }
+        .product-line-table .form-select,
+        .product-line-table .form-control { font-size: 0.85rem; padding: 6px 10px; }
+        
+        .qty-stepper {
+            display: flex; align-items: center; border: 1px solid #cbd5e1;
+            border-radius: 4px; overflow: hidden; width: fit-content; background: #fff;
+        }
+        .qty-stepper button {
+            background-color: #f1f5f9; border: none; width: 28px;
+            height: 30px; font-weight: bold; color: #334155;
+        }
+        .qty-stepper button:hover { background-color: #cbd5e1; }
+        .qty-stepper input {
+            border: none; width: 45px; text-align: center;
+            font-size: 0.85rem; font-weight: 600; height: 30px;
+        }
+        .qty-stepper input:focus { outline: none; }
+        
+        .delete-row-btn {
+            background: none; border: none; color: #475569; font-size: 1.1rem;
+        }
+        .delete-row-btn:hover { color: #ef4444; }
+
+        .delete-order-btn {
+            width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border: none; border-radius: 6px; background: #fff; color: #64748b; transition: all .2s ease;
+        }
+
+        .delete-order-btn:hover {
+            background: #fee2e2; color: #dc2626;
+        }
+
+        .discount-badge {
+            display: inline-block; background: #dcfce7; color: #16a34a;
+            font-size: 0.7rem; font-weight: 700; padding: 1px 5px;
+            border-radius: 3px; margin-left: 4px; vertical-align: middle;
+        }
+        
+        .add-more-btn {
+            background: #fff; border: 1px solid #cbd5e1; color: #1e293b;
+            font-weight: 500; font-size: 0.85rem; padding: 6px 12px; border-radius: 4px;
+            transition: all 0.2s ease; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .add-more-btn:hover { background-color: #f8fafc; }
+        
+        .order-summary-box { background-color: #f1f5f9; border-top: 1px solid #cbd5e1; }
+        .empty-products-msg { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px; }
+    </style>
+}
+
+<div id="ledgerHeaderFrame" class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h3 class="fw-bold tracking-tight m-0 text-slate-900">Customer Order Management Ledger</h3>
+        <p class="text-muted small m-0 mt-1">Track downstream fulfillment workflows, edit shipping routes, and log many-to-many variant item breakdowns.</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-primary fw-semibold px-4 shadow-sm" style="background: var(--accent-color); border: none;" onclick="toggleWorkspaceViewFrame(true)">
+            <i class="fa-solid fa-circle-plus me-2"></i>Place Order
+        </button>
+    </div>
+</div>
+
+<div id="ledgerMainViewPane" class="view-pane active-pane">
+    <div class="row g-4">
+        <div class="col-12 col-xl-7">
+            <div class="content-card h-100">
+                <div class="card-title-bar d-flex justify-content-between align-items-center flex-wrap gap-3">
+                    <span>Customer Fulfillment Queue</span>
+                    <div class="position-relative">
+                        <input type="text" class="form-control form-control-sm border-slate-200" id="searchField" placeholder="Filter by customer or ID..." style="min-width: 220px;" onkeyup="executeLiveFilter()">
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table align-middle m-0" id="fulfillmentTable">
+                        <thead>
+                            <tr>
+                                <th>Order Context</th>
+                                <th>Client Profile</th>
+                                <th>Shipping Route</th>
+                                <th>Status</th>
+                                <th class="text-end">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Dynamic Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-xl-5">
+            <div class="content-card h-100" id="detailPanel">
+                <div class="empty-state-panel" id="emptyState">
+                    <i class="fa-solid fa-hand-pointer fa-2x text-slate-300 mb-3" style="color: #cbd5e1;"></i>
+                    <h6 class="fw-semibold text-secondary m-0">No Order Selected</h6>
+                    <p class="text-muted small m-0 mt-1">Please click any order row from ledger to trace elements breakdowns.</p>
+                </div>
+                <div class="d-none h-100 flex-column" id="activeDetailContainer">
+                    <div class="card-title-bar">Order Items Join Breakdowns</div>
+                    <div class="p-4 flex-grow-1 d-flex flex-column justify-content-between">
+                        <div>
+                            <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3">
+                                <div>
+                                    <span class="fw-bold text-dark fs-5 d-block" id="detailOrderId">#ORD-2026-XXXX</span>
+                                    <small class="text-muted">Customer: <strong id="detailCustomerName">-</strong></small>
+                                </div>
+                            </div>
+                            
+                            <div id="dynamicItemsGrid"></div>
+
+                            <div class="border-top pt-3 mt-3">
+                                <div class="row g-2">
+                                    <div class="col-6">
+                                        <label class="form-label small fw-semibold text-muted mb-1">Fulfillment Status</label>
+                                        <select class="form-select form-select-sm" id="detailStatusSelect">
+                                            <option value="Pending">Pending</option>
+                                            <option value="Shipped">Shipped</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="form-label small fw-semibold text-muted mb-1">Payment Status</label>
+                                        <div class="form-control form-control-sm bg-light fw-medium" id="detailPaymentStatusText">—</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2">
+                                    <label class="form-label small fw-semibold text-muted mb-1">Shipping Route (Address)</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" class="form-control" id="detailAddressInput">
+                                        <button class="btn btn-outline-secondary" type="button" id="btnSaveAddress">
+                                            <i class="fa-solid fa-floppy-disk"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-light p-3 border rounded mt-3">
+                            <div class="d-flex justify-content-between small mb-1"><span>Subtotal:</span><span id="txtSubtotal">PKR 0</span></div>
+                            <div class="d-flex justify-content-between small mb-1"><span>Discount:</span><span id="txtDiscount">PKR 0</span></div>
+                            <div class="d-flex justify-content-between fw-bold fs-6 pt-2 border-top mt-2"><span>Grand Total:</span><span id="txtFinalAmount">PKR 0</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="placeOrderWorkspacePane" class="view-pane">
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <div>
+            <h3 class="fw-bold text-dark m-0" style="font-size: 1.65rem;">Place New Order</h3>
+            <p class="text-muted small m-0 mt-1" style="font-size: 0.88rem;">Select a customer, build out order items, and confirm pricing before final placement.</p>
+        </div>
+    </div>
+
+    <form id="newOrderForm" onsubmit="event.preventDefault();">
+        <div class="content-card mb-3">
+            <div class="card-title-bar">Customer Details</div>
+            <div class="p-3">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-medium text-dark mb-1">Select Registered Customer</label>
+                        <select class="form-select border-slate-300 shadow-sm" id="orderCustomerSelect" onchange="syncCustomerProfileMetaInfoDetails(this.value)">
+                            <option value="">-- Choose a registered customer --</option>
+                        </select>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-medium text-dark mb-1">Profile</label>
+                        <div class="customer-meta-box d-flex justify-content-between align-items-center" id="metaCustPhone">--</div>
+                    </div>
+                    <div class="col-12 col-md-4">
+                        <label class="form-label small fw-medium text-dark mb-1">Address</label>
+                        <div class="customer-meta-box" id="metaCustAddress">--</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card mb-3">
+            <div class="card-title-bar">Order Items</div>
+            <div class="p-0">
+                <div class="table-responsive">
+                    <table class="product-line-table m-0">
+                        <thead>
+                            <tr>
+                                <th style="width: 22%;">Sub Category</th>
+                                <th style="width: 22%;">Product</th>
+                                <th style="width: 22%;">Variant</th>
+                                <th style="width: 14%;">Quantity</th>
+                                <th style="width: 10%;">Unit Price</th>
+                                <th style="width: 10%;">Total Price</th>
+                                <th style="width: 5%; text-align: center;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="productLineItemsContainer"></tbody>
+                    </table>
+                    <div id="emptyProductsState" class="empty-products-msg border-bottom">No items added yet. Click button below to add.</div>
+                </div>
+                <div class="p-3 bg-light">
+                    <button type="button" class="add-more-btn" onclick="appendBlankProductLineItemRow()">
+                        <i class="fa-solid fa-plus me-1"></i>Add More Product
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-card">
+            <div class="card-title-bar">Order Summary & Placement</div>
+            <div class="p-0">
+                <div class="row g-0">
+                    <div class="col-12 col-md-8 border-end bg-white"></div>
+                    <div class="col-12 col-md-4 bg-light">
+                        <div class="p-3">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small text-dark">Subtotal:</span>
+                                <span class="fw-semibold" id="summarySubtotal">PKR 0</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="small text-dark">Discount:</span>
+                                <input type="text" class="form-control form-control-sm text-end border-slate-300 bg-light" id="summaryDiscountInput" value="PKR 0" style="width: 120px;" readonly>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2 mb-3">
+                                <span class="small fw-bold text-dark">Grand Total:</span>
+                                <span class="fw-bold text-dark" id="summaryGrandTotal">PKR 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-3 bg-white border-top d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-4 py-2 fw-medium" style="border-radius:4px;" onclick="toggleWorkspaceViewFrame(false)">Cancel</button>
+                    <button type="button" class="btn btn-sm btn-primary px-4 py-2 fw-medium" style="background:#1d4ed8; border:none; border-radius:4px;" onclick="commitPlaceOrderWorkspaceChangesToMemory()">
+                        <i class="fa-solid fa-upload me-1"></i>Place Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        let customersCache = [];
+        let subcategoriesCache = [];
+        let promotionsCache = [];
+        let selectedOrderId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadOrdersList();
+            fetchCustomers();
+            fetchSubcategories();
+            fetchPromotions();
+
+            document.getElementById('btnSaveAddress').addEventListener('click', () => {
+                if (selectedOrderId) {
+                    updateOrderAddress(selectedOrderId);
+                }
+            });
+            document.getElementById('detailStatusSelect').addEventListener('change', (e) => {
+                if (selectedOrderId) {
+                    updateOrderStatus(selectedOrderId, e.target.value);
+                }
+            });
+        });
+
+        // Dynamic API Helper
+        async function apiCall(url, method = 'GET', body = null) {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    const errData = await response.json().catch(() => ({}));
+                    throw new Error(errData.detail || `API error: ${response.statusText}`);
+                }
+                return await response.json();
+            } catch (err) {
+                console.error(err);
+                if (window.showToast) {
+                    window.showToast(err.message, 'error');
+                } else {
+                    alert("Error: " + err.message);
+                }
+                return null;
+            }
+        }
+
+        async function loadOrdersList() {
+            const orders = await apiCall('/api/customer-orders');
+            const tbody = document.querySelector('#fulfillmentTable tbody');
+            tbody.innerHTML = '';
+
+            if (!orders || orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center text-muted py-4"><i class="fa-solid fa-inbox me-2"></i>No customer orders found.</td></tr>`;
+                return;
+            }
+
+            orders.forEach(o => {
+                const dateStr = new Date(o.orderDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                const orderYear = new Date(o.orderDate).getFullYear();
+                const displayId = `#ORD-${orderYear}-${o.orderId}`;
+                const badgeHtml = getStatusBadgeHtml(o.status);
+
+                const tr = document.createElement('tr');
+                tr.className = 'selectable-row';
+                tr.id = `row-${o.orderId}`;
+                tr.setAttribute('onclick', `loadOrderDetails('${o.orderId}')`);
+                tr.innerHTML = `
+                    <td>
+                        <div class="fw-bold text-dark target-id">${displayId}</div>
+                        <small class="text-muted d-block mt-0.5"><i class="fa-regular fa-clock me-1"></i> ${dateStr}</small>
+                    </td>
+                    <td>
+                        <div class="fw-semibold text-dark target-name" id="name-${o.orderId}">${escapeHtml(o.customerName || 'Guest')}</div>
+                        <div class="text-muted small">${o.customerId ? 'Registered | ID: ' + o.customerId : 'Guest Checkout'}</div>
+                    </td>
+                    <td>
+                        <div class="text-truncate text-dark" style="max-width: 180px; font-size:0.85rem;" id="addr-${o.orderId}" title="${escapeHtml(o.shippingAddress)}">${escapeHtml(o.shippingAddress)}</div>
+                    </td>
+                    <td id="status-container-${o.orderId}">
+                        ${badgeHtml}
+                    </td>
+                     <td>
+                        <div class="d-flex justify-content-center align-items-center">
+                        <button class="delete-order-btn"
+                        title="Delete Order"
+                        onclick="event.stopPropagation(); deleteOrder(${o.orderId});">
+                        <i class="fa-solid fa-trash-can"></i>
+                       </button>
+                     </div>
+                   </td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Reselect the active row if any
+            if (selectedOrderId) {
+                const rowEl = document.getElementById(`row-${selectedOrderId}`);
+                if (rowEl) rowEl.classList.add('is-selected');
+            }
+        }
+
+        function getStatusBadgeHtml(status) {
+            if (status === 'Shipped') {
+                return `<span class="status-badge status-shipped"><i class="fa-solid fa-truck"></i> Shipped</span>`;
+            } else if (status === 'Pending') {
+                return `<span class="status-badge status-pending"><i class="fa-solid fa-clock-rotate-left"></i> Pending</span>`;
+            } else {
+                return `<span class="status-badge bg-secondary text-white">${status}</span>`;
+            }
+        }
+
+        async function fetchCustomers() {
+            const data = await apiCall('/api/customers');
+            if (data) {
+                customersCache = data;
+                const select = document.getElementById('orderCustomerSelect');
+                select.innerHTML = '<option value="">-- Choose a registered customer --</option>';
+                data.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.customerId;
+                    opt.textContent = `${c.fullName} (ID: ${c.customerId})`;
+                    select.appendChild(opt);
+                });
+            }
+        }
+
+        async function fetchSubcategories() {
+            const data = await apiCall('/api/subcategories');
+            if (data) {
+                subcategoriesCache = data;
+            }
+        }
+
+        async function fetchPromotions() {
+            const data = await apiCall('/Promotion/List');
+            if (data) {
+                promotionsCache = data;
+            }
+        }
+
+        function getActivePromoForSubcategory(subCategoryId) {
+
+            if (!subCategoryId) return null;
+
+            const today = new Date().toISOString().split('T')[0];
+
+            return promotionsCache.find(p =>
+                p.subCategoryId == subCategoryId &&
+                p.isActive === true &&
+                (!p.startDate || p.startDate <= today) &&
+                (!p.endDate || p.endDate >= today)
+            );
+        }
+
+        function calculateRowDiscount(row) {
+            const catSelect = row.querySelector('.cat-select');
+            const subCategoryId = catSelect ? catSelect.value : null;
+            const varSelect = row.querySelector('.var-select');
+            const qty = parseInt(row.querySelector('.row-qty-input').value) || 0;
+            const selectedOpt = varSelect ? varSelect.options[varSelect.selectedIndex] : null;
+            
+            if (!subCategoryId || !selectedOpt || !selectedOpt.value) return 0;
+            
+            const price = parseFloat(selectedOpt.getAttribute('data-price')) || 0;
+            const rowGrossTotal = price * qty;
+            
+            const promo = getActivePromoForSubcategory(subCategoryId);
+            if (!promo || !promo.promotionDiscount) return 0;
+            
+            const discountStr = promo.promotionDiscount;
+            const cleanStr = discountStr.replace(/[^0-9.]/g, '');
+            const numVal = parseFloat(cleanStr) || 0;
+            if (discountStr.includes('%')) {
+                return rowGrossTotal * (numVal / 100);
+            }
+            return numVal;
+        }
+
+        function toggleWorkspaceViewFrame(showPlaceOrder) {
+            const ledgerPane = document.getElementById('ledgerMainViewPane');
+            const placeOrderPane = document.getElementById('placeOrderWorkspacePane');
+            const ledgerHeader = document.getElementById('ledgerHeaderFrame');
+            
+            if (showPlaceOrder) {
+                ledgerHeader.style.display = 'none';
+                ledgerPane.classList.remove('active-pane');
+                placeOrderPane.classList.add('active-pane');
+                resetFormStateWorkspace();
+                appendBlankProductLineItemRow();
+            } else {
+                ledgerHeader.style.display = 'flex';
+                placeOrderPane.classList.remove('active-pane');
+                ledgerPane.classList.add('active-pane');
+            }
+        }
+
+        function resetFormStateWorkspace() {
+            document.getElementById('newOrderForm').reset();
+            document.getElementById('productLineItemsContainer').innerHTML = '';
+            document.getElementById('summaryDiscountInput').value = "0";
+            syncCustomerProfileMetaInfoDetails('');
+            evaluateAggregatedOrderSummaryValues();
+        }
+
+        function executeLiveFilter() {
+            const query = document.getElementById('searchField').value.toLowerCase().trim();
+            const tableRows = document.querySelectorAll('#fulfillmentTable tbody tr');
+            tableRows.forEach(row => {
+                const orderIdText = row.querySelector('.target-id') ? row.querySelector('.target-id').innerText.toLowerCase() : "";
+                const customerNameText = row.querySelector('.target-name') ? row.querySelector('.target-name').innerText.toLowerCase() : "";
+                row.style.display = (orderIdText.includes(query) || customerNameText.includes(query)) ? "" : "none";
+            });
+        }
+
+        async function loadOrderDetails(id) {
+            document.querySelectorAll('.selectable-row').forEach(row => row.classList.remove('is-selected'));
+            const rowEl = document.getElementById(`row-${id}`);
+            if (rowEl) rowEl.classList.add('is-selected');
+            
+            document.getElementById('emptyState').classList.add('d-none');
+            const container = document.getElementById('activeDetailContainer');
+            container.classList.remove('d-none'); container.classList.add('d-flex');
+
+            const o = await apiCall(`/api/customer-orders/${id}`);
+            if (!o) return;
+
+            selectedOrderId = id;
+
+            const orderYear = new Date(o.orderDate).getFullYear();
+            const displayId = `#ORD-${orderYear}-${o.orderId}`;
+            document.getElementById('detailOrderId').innerText = displayId;
+            document.getElementById('detailCustomerName').innerText = o.customerName || 'Guest';
+            
+            document.getElementById('txtSubtotal').innerText = `PKR ${o.totalAmount.toLocaleString()}`;
+            document.getElementById('txtDiscount').innerText = `PKR ${o.discountedAmount.toLocaleString()}`;
+            document.getElementById('txtFinalAmount').innerText = `PKR ${o.finalAmount.toLocaleString()}`;
+
+            // Sync fulfillment inputs
+            document.getElementById('detailStatusSelect').value = o.status;
+            document.getElementById('detailAddressInput').value = o.shippingAddress || '';
+
+            const payStatusEl = document.getElementById('detailPaymentStatusText');
+            if (payStatusEl) {
+                const payStatus = o.payment ? o.payment.paymentStatus : 'Pending';
+                payStatusEl.innerText = payStatus;
+                if (payStatus === 'Paid') {
+                    payStatusEl.className = "form-control form-control-sm bg-success-subtle text-success fw-bold";
+                } else {
+                    payStatusEl.className = "form-control form-control-sm bg-warning-subtle text-warning fw-bold";
+                }
+            }
+
+            const grid = document.getElementById('dynamicItemsGrid');
+            grid.innerHTML = '';
+            o.items.forEach(item => {
+                const sizeColorStr = (item.variantSize && item.variantColor && item.variantSize !== 'N/A' && item.variantColor !== 'N/A')
+                    ? `${item.variantSize} / ${item.variantColor}`
+                    : item.sku || 'N/A';
+                const itemName = `${item.productName} (${sizeColorStr})`;
+                const itemMetrics = `${item.quantity} Unit(s) × PKR ${item.unitPrice.toLocaleString()}`;
+                grid.innerHTML += `
+                    <div class="nested-item-row d-flex justify-content-between align-items-center">
+                        <span class="fw-semibold text-dark">${escapeHtml(itemName)}</span>
+                        <span class="text-muted fw-bold small">${escapeHtml(itemMetrics)}</span>
+                    </div>
+                `;
+            });
+        }
+
+        async function updateOrderStatus(orderId, newStatus) {
+            const result = await apiCall('/api/customer-orders/update-status', 'POST', {
+                orderId: parseInt(orderId),
+                status: newStatus
+            });
+            if (result) {
+                if (window.showToast) {
+                    window.showToast("Order status updated successfully!", "success");
+                }
+                // If Shipped → auto-mark payment as Paid immediately in the UI
+                if (newStatus === 'Shipped') {
+                    const payStatusEl = document.getElementById('detailPaymentStatusText');
+                    if (payStatusEl) {
+                        payStatusEl.innerText = 'Paid';
+                        payStatusEl.className = "form-control form-control-sm bg-success-subtle text-success fw-bold";
+                    }
+                }
+                await loadOrdersList();
+                await loadOrderDetails(orderId);
+            }
+        }
+
+        async function deleteOrder(orderId) {
+            if (!confirm(`Are you sure you want to delete Order #ORD-${new Date().getFullYear()}-${orderId}? This action cannot be undone.`)) return;
+            const result = await apiCall(`/api/customer-orders/${orderId}`, 'DELETE');
+            if (result) {
+                if (window.showToast) {
+                    window.showToast("Order deleted successfully!", "success");
+                }
+                // Reset detail panel if we deleted the selected order
+                if (selectedOrderId == orderId) {
+                    selectedOrderId = null;
+                    document.getElementById('emptyState').classList.remove('d-none');
+                    const container = document.getElementById('activeDetailContainer');
+                    container.classList.add('d-none');
+                    container.classList.remove('d-flex');
+                }
+                await loadOrdersList();
+            }
+        }
+
+        async function updateOrderAddress(orderId) {
+            const newAddress = document.getElementById('detailAddressInput').value.trim();
+            if (!newAddress) {
+                alert("Shipping route/address cannot be empty.");
+                return;
+            }
+            const result = await apiCall('/api/customer-orders/update-status', 'POST', {
+                orderId: parseInt(orderId),
+                shippingAddress: newAddress
+            });
+            if (result) {
+                if (window.showToast) {
+                    window.showToast("Shipping route updated successfully!", "success");
+                }
+                await loadOrdersList();
+                await loadOrderDetails(orderId);
+            }
+        }
+
+        function syncCustomerProfileMetaInfoDetails(custId) {
+            const client = customersCache.find(c => c.customerId == custId);
+            if (client) {
+                document.getElementById('metaCustPhone').innerText = client.phoneNo || '--';
+                document.getElementById('metaCustAddress').innerText = client.address || '--';
+            } else {
+                document.getElementById('metaCustPhone').innerText = "--";
+                document.getElementById('metaCustAddress').innerText = "--";
+            }
+        }
+
+        function appendBlankProductLineItemRow() {
+            const tbody = document.getElementById('productLineItemsContainer');
+            const rowId = 'row-' + Date.now();
+
+            let categoryOptions = '<option value="">Sub Category</option>';
+            subcategoriesCache.forEach(sc => {
+                categoryOptions += `<option value="${sc.id}">${escapeHtml(sc.name)}</option>`;
+            });
+
+            const tr = document.createElement('tr');
+            tr.id = rowId;
+            tr.innerHTML = `
+                <td><select class="form-select cat-select" onchange="handleCategorySwitch('${rowId}', this.value)">${categoryOptions}</select></td>
+                <td><select class="form-select prod-select" disabled onchange="handleProductSwitch('${rowId}', this.value)"><option value="">Select a Product</option></select></td>
+                <td><select class="form-select var-select" disabled onchange="handleVariantSwitch('${rowId}')"><option value="">--</option></select></td>
+                <td>
+                    <div class="qty-stepper">
+                        <button type="button" onclick="alterRowQty('${rowId}', -1)">&minus;</button>
+                        <input type="text" class="row-qty-input" value="1" readonly>
+                        <button type="button" onclick="alterRowQty('${rowId}', 1)">&plus;</button>
+                    </div>
+                </td>
+                <td>PKR <span class="row-unit-price">0</span></td>
+                <td>PKR <span class="row-total-price">0</span></td>
+                <td class="text-center">
+                    <button type="button" class="delete-row-btn" onclick="removeProductRow('${rowId}')"><i class="fa-solid fa-trash-can"></i></button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            evaluateAggregatedOrderSummaryValues();
+        }
+
+        async function handleCategorySwitch(rowId, subcategoryId) {
+            const row = document.getElementById(rowId);
+            const prodSelect = row.querySelector('.prod-select');
+            const varSelect = row.querySelector('.var-select');
+            
+            prodSelect.innerHTML = '<option value="">Select a Product</option>';
+            varSelect.innerHTML = '<option value="">--</option>';
+            varSelect.disabled = true;
+            row.querySelector('.row-unit-price').innerText = "0";
+            row.querySelector('.row-total-price').innerText = "0";
+
+            if (!subcategoryId) {
+                prodSelect.disabled = true;
+                evaluateAggregatedOrderSummaryValues();
+                return;
+            }
+
+            prodSelect.disabled = false;
+            const products = await apiCall(`/api/products/by-subcategory?subcategory_id=${subcategoryId}`);
+            if (products) {
+                let options = '<option value="">Select a Product</option>';
+                products.forEach(p => {
+                    options += `<option value="${p.id}">${escapeHtml(p.name)}</option>`;
+                });
+                prodSelect.innerHTML = options;
+            }
+            evaluateAggregatedOrderSummaryValues();
+        }
+
+        async function handleProductSwitch(rowId, productId) {
+            const row = document.getElementById(rowId);
+            const varSelect = row.querySelector('.var-select');
+
+            varSelect.innerHTML = '<option value="">--</option>';
+            row.querySelector('.row-unit-price').innerText = "0";
+            row.querySelector('.row-total-price').innerText = "0";
+
+            if (!productId) {
+                varSelect.disabled = true;
+                evaluateAggregatedOrderSummaryValues();
+                return;
+            }
+
+            varSelect.disabled = false;
+            const variants = await apiCall(`/api/variants/by-product?product_id=${productId}`);
+            if (variants) {
+                let options = '<option value="">--</option>';
+                variants.forEach(v => {
+                    const label = (v.size && v.color && v.size !== 'N/A' && v.color !== 'N/A')
+                        ? `${v.size} / ${v.color}`
+                        : v.sku || 'N/A';
+                    options += `<option value="${v.variantId}" data-price="${v.price}">${escapeHtml(label)}</option>`;
+                });
+                varSelect.innerHTML = options;
+            }
+            evaluateAggregatedOrderSummaryValues();
+        }
+
+        function handleVariantSwitch(rowId) {
+            const row = document.getElementById(rowId);
+            const varSelect = row.querySelector('.var-select');
+            const selectedOpt = varSelect.options[varSelect.selectedIndex];
+            
+            let price = 0;
+            if (selectedOpt && selectedOpt.value) {
+                price = parseFloat(selectedOpt.getAttribute('data-price')) || 0;
+            }
+
+            // Calculate per-unit discount from active promotion
+            const qty = parseInt(row.querySelector('.row-qty-input').value) || 1;
+            const rowGrossTotal = price * qty;
+            const rowDiscount = calculateRowDiscount(row);
+            const discountedUnitPrice = qty > 0 ? (rowGrossTotal - rowDiscount) / qty : price;
+
+            const unitPriceEl = row.querySelector('.row-unit-price');
+            if (rowDiscount > 0) {
+                unitPriceEl.innerHTML = `<span style="text-decoration:line-through;color:#94a3b8;font-size:0.8em">${price.toLocaleString()}</span> ${discountedUnitPrice.toLocaleString(undefined, {maximumFractionDigits:2})}<span class="discount-badge">SALE</span>`;
+            } else {
+                unitPriceEl.innerText = price.toLocaleString();
+            }
+            recalculateRowTotal(rowId);
+        }
+
+        function alterRowQty(rowId, delta) {
+            const row = document.getElementById(rowId);
+            const qtyInput = row.querySelector('.row-qty-input');
+            let currentQty = parseInt(qtyInput.value) || 1;
+            currentQty += delta;
+            if (currentQty < 0) currentQty = 0;
+            qtyInput.value = currentQty;
+            
+            recalculateRowTotal(rowId);
+        }
+
+        function recalculateRowTotal(rowId) {
+            const row = document.getElementById(rowId);
+            const varSelect = row.querySelector('.var-select');
+            const qty = parseInt(row.querySelector('.row-qty-input').value) || 0;
+            const selectedOpt = varSelect.options[varSelect.selectedIndex];
+            
+            let price = 0;
+            if (selectedOpt && selectedOpt.value) {
+                price = parseFloat(selectedOpt.getAttribute('data-price')) || 0;
+            }
+
+            const rowDiscount = calculateRowDiscount(row);
+            const netTotal = (price * qty) - rowDiscount;
+
+            // Re-render discounted unit price
+            const unitPriceEl = row.querySelector('.row-unit-price');
+            const discountedUnitPrice = qty > 0 ? netTotal / qty : price;
+            if (rowDiscount > 0) {
+                unitPriceEl.innerHTML = `<span style="text-decoration:line-through;color:#94a3b8;font-size:0.8em">${price.toLocaleString()}</span> ${discountedUnitPrice.toLocaleString(undefined, {maximumFractionDigits:2})}<span class="discount-badge">SALE</span>`;
+            } else {
+                unitPriceEl.innerText = price.toLocaleString();
+            }
+
+            row.querySelector('.row-total-price').innerText = netTotal.toLocaleString(undefined, {maximumFractionDigits:2});
+            evaluateAggregatedOrderSummaryValues();
+        }
+
+        function removeProductRow(rowId) {
+            const row = document.getElementById(rowId);
+            if (row) row.remove();
+            evaluateAggregatedOrderSummaryValues();
+        }
+
+        function evaluateAggregatedOrderSummaryValues() {
+            const tbody = document.getElementById('productLineItemsContainer');
+            const rows = tbody.querySelectorAll('tr');
+            
+            document.getElementById('emptyProductsState').style.display = (rows.length === 0) ? 'block' : 'none';
+
+            let subtotal = 0;
+            let totalDiscount = 0;
+            rows.forEach(row => {
+                const varSelect = row.querySelector('.var-select');
+                const qty = parseInt(row.querySelector('.row-qty-input').value) || 0;
+                const selectedOpt = varSelect.options[varSelect.selectedIndex];
+                if (selectedOpt && selectedOpt.value) {
+                    const price = parseFloat(selectedOpt.getAttribute('data-price')) || 0;
+                    subtotal += (price * qty);
+                    totalDiscount += calculateRowDiscount(row);
+                }
+            });
+
+            let grandTotal = subtotal - totalDiscount;
+            if (grandTotal < 0) grandTotal = 0;
+
+            document.getElementById('summarySubtotal').innerText = "PKR " + subtotal.toLocaleString();
+            document.getElementById('summaryDiscountInput').value = "PKR " + totalDiscount.toLocaleString();
+            document.getElementById('summaryGrandTotal').innerText = "PKR " + grandTotal.toLocaleString();
+        }
+
+        async function commitPlaceOrderWorkspaceChangesToMemory() {
+            const custSelect = document.getElementById('orderCustomerSelect');
+            if (!custSelect.value) {
+                alert("Please select a target client profile.");
+                return;
+            }
+
+            const customerId = parseInt(custSelect.value);
+            const clientProfile = customersCache.find(c => c.customerId === customerId);
+            if (!clientProfile) {
+                alert("Invalid customer selected.");
+                return;
+            }
+
+            const rows = document.querySelectorAll('#productLineItemsContainer tr');
+            let orderItems = [];
+            let totalDiscount = 0;
+
+            rows.forEach(row => {
+                const prod = row.querySelector('.prod-select').value;
+                const variantIdVal = row.querySelector('.var-select').value;
+                const qty = parseInt(row.querySelector('.row-qty-input').value) || 0;
+                const varSelect = row.querySelector('.var-select');
+                const selectedOpt = varSelect.options[varSelect.selectedIndex];
+
+                if (prod && variantIdVal && selectedOpt && selectedOpt.value && qty > 0) {
+                    const price = parseFloat(selectedOpt.getAttribute('data-price')) || 0;
+                    const rowDiscount = calculateRowDiscount(row);
+                    totalDiscount += rowDiscount;
+                    orderItems.push({
+                        variantId: parseInt(variantIdVal),
+                        quantity: qty,
+                        unitPrice: price,
+                        discountedAmount: rowDiscount,
+                        subtotal: (price * qty) - rowDiscount
+                    });
+                }
+            });
+
+            if (orderItems.length === 0) {
+                alert("Please add at least one valid product variant with quantity greater than 0.");
+                return;
+            }
+
+            const payload = {
+                customerId: clientProfile.customerId,
+                customerName: clientProfile.fullName,
+                shippingAddress: clientProfile.address || `${clientProfile.city || ''}, ${clientProfile.country || ''}`,
+                discountedAmount: totalDiscount,
+                orderItems: orderItems
+            };
+
+            const response = await apiCall('/api/customer-orders', 'POST', payload);
+            if (response && response.orderId) {
+                if (window.showToast) {
+                    window.showToast("Order placed successfully!", "success");
+                }
+                toggleWorkspaceViewFrame(false);
+                await loadOrdersList();
+                loadOrderDetails(response.orderId);
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.toString()
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+}
