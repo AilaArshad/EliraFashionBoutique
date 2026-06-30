@@ -23,6 +23,9 @@ public class EliraDbContext : DbContext
     public virtual DbSet<PurchaseOrder> PurchaseOrders { get; set; }
     public virtual DbSet<PurchaseOrderItem> PurchaseOrderItems { get; set; }
     public virtual DbSet<Inventory> Inventories { get; set; }
+    public virtual DbSet<Order> Orders { get; set; }
+    public virtual DbSet<OrderItem> OrderItems { get; set; }
+    public virtual DbSet<Payment> Payments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -223,6 +226,55 @@ public class EliraDbContext : DbContext
             entity.HasOne(d => d.Variant)
                 .WithOne()
                 .HasForeignKey<Inventory>(d => d.VariantId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<Order>(entity =>
+        {
+            entity.HasKey(e => e.OrderId);
+            entity.Property(e => e.CustomerName).HasMaxLength(150);
+            entity.Property(e => e.GuestEmail).HasMaxLength(150);
+            entity.Property(e => e.GuestPhoneNo).HasMaxLength(20);
+            entity.Property(e => e.Status).HasMaxLength(50);
+            entity.Property(e => e.TotalAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.DiscountedAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.FinalAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.ShippingAddress).HasColumnType("text");
+            entity.Property(e => e.OrderDate).HasDefaultValueSql("GETDATE()");
+
+            entity.HasOne(d => d.Customer)
+                .WithMany()
+                .HasForeignKey(d => d.CustomerId)
+                .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<OrderItem>(entity =>
+        {
+            entity.HasKey(e => e.OrderItemId);
+            entity.Property(e => e.UnitPrice).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.DiscountedAmount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.Subtotal).HasColumnType("decimal(10, 2)");
+
+            entity.HasOne(d => d.Order)
+                .WithMany(p => p.OrderItems)
+                .HasForeignKey(d => d.OrderId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            entity.HasOne(d => d.Variant)
+                .WithMany()
+                .HasForeignKey(d => d.VariantId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<Payment>(entity =>
+        {
+            entity.HasKey(e => e.PaymentId);
+            entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)");
+            entity.Property(e => e.PaymentStatus).HasMaxLength(50);
+
+            entity.HasOne(d => d.Order)
+                .WithOne(p => p.Payment)
+                .HasForeignKey<Payment>(d => d.OrderId)
                 .OnDelete(DeleteBehavior.Cascade);
         });
     }
