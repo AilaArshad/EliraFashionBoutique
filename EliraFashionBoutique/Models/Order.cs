@@ -28,6 +28,8 @@ public class Order
     [StringLength(50)]
     public string Status { get; set; } = "Pending";
 
+    public DateTime? DeliveryDate { get; set; }
+
     [Required]
     [Column(TypeName = "decimal(10, 2)")]
     public decimal TotalAmount { get; set; }

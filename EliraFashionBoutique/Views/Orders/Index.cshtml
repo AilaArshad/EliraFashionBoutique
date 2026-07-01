@@ -595,8 +595,22 @@
             document.getElementById('txtFinalAmount').innerText = `PKR ${o.finalAmount.toLocaleString()}`;
 
             // Sync fulfillment inputs
-            document.getElementById('detailStatusSelect').value = o.status;
-            document.getElementById('detailAddressInput').value = o.shippingAddress || '';
+            const statusSelect = document.getElementById('detailStatusSelect');
+            const addressInput = document.getElementById('detailAddressInput');
+            const btnSaveAddress = document.getElementById('btnSaveAddress');
+
+            statusSelect.value = o.status;
+            addressInput.value = o.shippingAddress || '';
+
+            if (o.status === 'Shipped') {
+                statusSelect.disabled = true;
+                addressInput.disabled = true;
+                btnSaveAddress.disabled = true;
+            } else {
+                statusSelect.disabled = false;
+                addressInput.disabled = false;
+                btnSaveAddress.disabled = false;
+            }
 
             const payStatusEl = document.getElementById('detailPaymentStatusText');
             if (payStatusEl) {

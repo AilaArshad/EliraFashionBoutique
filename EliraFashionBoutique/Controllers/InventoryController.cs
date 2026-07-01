@@ -10,7 +10,6 @@ namespace EliraFashionBoutique.Controllers;
 public class InventoryController : Controller
 {
     private readonly EliraDbContext _context;
-    private static readonly string ThresholdsFilePath = Path.Combine(Directory.GetCurrentDirectory(), "reorder_thresholds.json");
 
     public InventoryController(EliraDbContext context)
     {
@@ -21,38 +20,6 @@ public class InventoryController : Controller
     public IActionResult Index()
     {
         return View();
-    }
-
-    private Dictionary<string, int> GetThresholds()
-    {
-        if (!System.IO.File.Exists(ThresholdsFilePath))
-        {
-            var defaults = new Dictionary<string, int>
-            {
-                { "LNN-SMR-SH-XL", 15 },
-                { "CTN-KRT-M", 12 },
-                { "BDL-LHG-RED", 5 }
-            };
-            System.IO.File.WriteAllText(ThresholdsFilePath, JsonSerializer.Serialize(defaults));
-            return defaults;
-        }
-
-        try
-        {
-            var text = System.IO.File.ReadAllText(ThresholdsFilePath);
-            return JsonSerializer.Deserialize<Dictionary<string, int>>(text) ?? new Dictionary<string, int>();
-        }
-        catch
-        {
-            return new Dictionary<string, int>();
-        }
-    }
-
-    private void SaveThreshold(string sku, int threshold)
-    {
-        var thresholds = GetThresholds();
-        thresholds[sku] = threshold;
-        System.IO.File.WriteAllText(ThresholdsFilePath, JsonSerializer.Serialize(thresholds));
     }
 
     // GET: /api/inventory
@@ -66,7 +33,6 @@ public class InventoryController : Controller
                 .ToListAsync();
 
             var inventories = await _context.Inventories.ToListAsync();
-            var thresholds = GetThresholds();
 
             var list = products.Select(p => {
                 int cumulativeStock = 0;
@@ -79,8 +45,7 @@ public class InventoryController : Controller
                     int stock = inv?.QuantityAvailable ?? 0;
                     cumulativeStock += stock;
 
-                    string sku = v.VariantSKU ?? ("Variant-" + v.VariantId);
-                    int threshold = thresholds.TryGetValue(sku, out var val) ? val : 10;
+                    int threshold = inv?.ReorderLevel ?? 10;
 
                     if (stock <= threshold)
                     {
@@ -126,14 +91,13 @@ public class InventoryController : Controller
             }
 
             var inventories = await _context.Inventories.ToListAsync();
-            var thresholds = GetThresholds();
 
             var list = product.ProductVariants.Select(v => {
                 var inv = inventories.FirstOrDefault(i => i.VariantId == v.VariantId);
                 int stock = inv?.QuantityAvailable ?? 0;
+                int threshold = inv?.ReorderLevel ?? 10;
 
                 string sku = v.VariantSKU ?? ("Variant-" + v.VariantId);
-                int threshold = thresholds.TryGetValue(sku, out var val) ? val : 10;
 
                 return new {
                     variantId = v.VariantId,
@@ -157,7 +121,7 @@ public class InventoryController : Controller
 
     // POST: /api/inventory/threshold
     [HttpPost("api/inventory/threshold")]
-    public IActionResult SaveThresholdLimit([FromBody] ThresholdInputDto input)
+    public async Task<IActionResult> SaveThresholdLimit([FromBody] ThresholdInputDto input)
     {
         if (input == null || string.IsNullOrWhiteSpace(input.Sku))
         {
@@ -166,7 +130,29 @@ public class InventoryController : Controller
 
         try
         {
-            SaveThreshold(input.Sku, input.Threshold);
+            var variant = await _context.ProductVariants.FirstOrDefaultAsync(v => v.VariantSKU == input.Sku);
+            if (variant == null)
+            {
+                return NotFound(new { detail = "Variant not found." });
+            }
+
+            var inventory = await _context.Inventories.FirstOrDefaultAsync(i => i.VariantId == variant.VariantId);
+            if (inventory == null)
+            {
+                inventory = new Inventory
+                {
+                    VariantId = variant.VariantId,
+                    QuantityAvailable = 0,
+                    ReorderLevel = input.Threshold
+                };
+                _context.Inventories.Add(inventory);
+            }
+            else
+            {
+                inventory.ReorderLevel = input.Threshold;
+            }
+
+            await _context.SaveChangesAsync();
             return Ok(new { success = true, message = "Threshold safety boundary limit updated." });
         }
         catch (Exception ex)

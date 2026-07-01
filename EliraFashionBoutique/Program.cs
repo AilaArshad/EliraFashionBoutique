@@ -83,6 +83,7 @@ using (var scope = app.Services.CreateScope())
     {
         var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<User>();
 
+        // 1. Seed Admin
         var admin = new User
         {
             Email = "admin@elira.com",
@@ -90,27 +91,59 @@ using (var scope = app.Services.CreateScope())
             IsEmailVerified = true,
             CreatedAt = DateTime.Now
         };
-        admin.Password = passwordHasher.HashPassword(admin, "password123");
+        admin.Password = passwordHasher.HashPassword(admin, "adminPassword123");
         context.Users.Add(admin);
 
-        var customerUser = new User
+        // 2. Seed Sales Manager
+        var salesManager = new User
         {
-            Email = "customer@elira.com",
+            Email = "salesmanager@elira.com",
+            RoleName = "Sales Manager",
+            IsEmailVerified = true,
+            CreatedAt = DateTime.Now
+        };
+        salesManager.Password = passwordHasher.HashPassword(salesManager, "salesPassword123");
+        context.Users.Add(salesManager);
+
+        // 3. Seed Customer 1
+        var customer1 = new User
+        {
+            Email = "customer1@elira.com",
             RoleName = "Customer",
             IsEmailVerified = true,
             CreatedAt = DateTime.Now
         };
-        customerUser.Password = passwordHasher.HashPassword(customerUser, "password123");
-        customerUser.Customer = new Customer
+        customer1.Password = passwordHasher.HashPassword(customer1, "customerPassword123");
+        customer1.Customer = new Customer
         {
-            FullName = "Test Customer",
-            PhoneNo = "03001234567",
-            Address = "123 Customer Lane",
+            FullName = "Aisha Khan",
+            PhoneNo = "03001112222",
+            Address = "House 45, Sector Y, DHA",
             City = "Lahore",
             Country = "Pakistan"
         };
-        context.Users.Add(customerUser);
+        context.Users.Add(customer1);
 
+        // 4. Seed Customer 2
+        var customer2 = new User
+        {
+            Email = "customer2@elira.com",
+            RoleName = "Customer",
+            IsEmailVerified = true,
+            CreatedAt = DateTime.Now
+        };
+        customer2.Password = passwordHasher.HashPassword(customer2, "customerPassword123");
+        customer2.Customer = new Customer
+        {
+            FullName = "Bilal Ahmed",
+            PhoneNo = "03003334444",
+            Address = "Flat 12, Askari 11",
+            City = "Lahore",
+            Country = "Pakistan"
+        };
+        context.Users.Add(customer2);
+
+        // 5. Seed Supplier (necessary for supplier order modules)
         var supplierUser = new User
         {
             Email = "supplier@elira.com",
@@ -118,7 +151,7 @@ using (var scope = app.Services.CreateScope())
             IsEmailVerified = true,
             CreatedAt = DateTime.Now
         };
-        supplierUser.Password = passwordHasher.HashPassword(supplierUser, "password123");
+        supplierUser.Password = passwordHasher.HashPassword(supplierUser, "supplierPassword123");
         supplierUser.Supplier = new Supplier
         {
             SupplierName = "Boutique Fabrics Ltd",
@@ -129,21 +162,6 @@ using (var scope = app.Services.CreateScope())
         };
         context.Users.Add(supplierUser);
 
-        context.SaveChanges();
-    }
-
-    if (!context.Users.Any(u => u.Email == "salesmanager@elira.com"))
-    {
-        var passwordHasher = new Microsoft.AspNetCore.Identity.PasswordHasher<User>();
-        var salesManager = new User
-        {
-            Email = "salesmanager@elira.com",
-            RoleName = "Sales Manager",
-            IsEmailVerified = true,
-            CreatedAt = DateTime.Now
-        };
-        salesManager.Password = passwordHasher.HashPassword(salesManager, "password123");
-        context.Users.Add(salesManager);
         context.SaveChanges();
     }
 }

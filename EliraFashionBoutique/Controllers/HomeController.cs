@@ -17,34 +17,9 @@ namespace EliraFashionBoutique.Controllers
     public class HomeController : Controller
     {
         private readonly EliraDbContext _context;
-        private static readonly string ThresholdsFilePath = Path.Combine(Directory.GetCurrentDirectory(), "reorder_thresholds.json");
-
         public HomeController(EliraDbContext context)
         {
             _context = context;
-        }
-
-        private Dictionary<string, int> GetThresholds()
-        {
-            if (!System.IO.File.Exists(ThresholdsFilePath))
-            {
-                return new Dictionary<string, int>
-                {
-                    { "LNN-SMR-SH-XL", 15 },
-                    { "CTN-KRT-M", 12 },
-                    { "BDL-LHG-RED", 5 }
-                };
-            }
-
-            try
-            {
-                var text = System.IO.File.ReadAllText(ThresholdsFilePath);
-                return JsonSerializer.Deserialize<Dictionary<string, int>>(text) ?? new Dictionary<string, int>();
-            }
-            catch
-            {
-                return new Dictionary<string, int>();
-            }
         }
 
         public async Task<IActionResult> Index()
@@ -64,26 +39,9 @@ namespace EliraFashionBoutique.Controllers
                 ? Math.Round(((double)verifiedAccounts / registeredAccounts) * 100, 0)
                 : 0.0;
 
-            // 4. Reorder Alerts (Evaluated via SKU mapping in thresholds file)
-            var inventories = await _context.Inventories
-                .Include(i => i.Variant)
-                .ToListAsync();
-
-            var thresholds = GetThresholds();
-            int reorderAlerts = 0;
-
-            foreach (var inv in inventories)
-            {
-                if (inv.Variant != null)
-                {
-                    string sku = inv.Variant.VariantSKU ?? ("Variant-" + inv.VariantId);
-                    int threshold = thresholds.TryGetValue(sku, out var val) ? val : 10;
-                    if (inv.QuantityAvailable <= threshold)
-                    {
-                        reorderAlerts++;
-                    }
-                }
-            }
+            // 4. Reorder Alerts
+            int reorderAlerts = await _context.Inventories
+                .CountAsync(inv => inv.QuantityAvailable <= inv.ReorderLevel);
 
             // 5. Recent Customer Sales Ledger (Projection avoids null references and performs clean SQL joins)
             var recentOrders = await _context.Orders

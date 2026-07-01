@@ -523,10 +523,12 @@
         const selected = dd.value;
         dd.innerHTML = '<option value="">Select Target Sub</option>';
         subcategories.forEach(s => {
-            const opt = document.createElement('option');
-            opt.value = s.subCategoryId;
-            opt.textContent = s.subcategoryName;
-            dd.appendChild(opt);
+            if (s.isActive) {
+                const opt = document.createElement('option');
+                opt.value = s.subCategoryId;
+                opt.textContent = s.subcategoryName;
+                dd.appendChild(opt);
+            }
         });
         dd.value = selected;
     }

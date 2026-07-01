@@ -225,6 +225,7 @@ public class EliraDbContext : DbContext
         {
             entity.HasKey(e => e.InventoryId);
             entity.HasIndex(e => e.VariantId).IsUnique();
+            entity.Property(e => e.ReorderLevel).HasDefaultValue(10);
 
             entity.HasOne(d => d.Variant)
                 .WithOne()

@@ -259,6 +259,11 @@ public class OrdersController : Controller
                 return NotFound(new { detail = "Order not found." });
             }
 
+            if (order.Status == "Shipped" && input.Status != order.Status)
+            {
+                return BadRequest(new { detail = "Cannot modify the status of an order that has already been Shipped." });
+            }
+
             string previousStatus = order.Status;
             if (!string.IsNullOrWhiteSpace(input.Status))
             {
@@ -271,13 +276,16 @@ public class OrdersController : Controller
 
             System.Console.WriteLine($"[ORDER LOG] Update for Order #{order.OrderId}: Status=\"{order.Status}\", Address=\"{order.ShippingAddress}\"");
 
-            // ─── CoD Automation: Shipped → Payment = Paid ───
-            if (previousStatus != "Shipped" && input.Status == "Shipped" && order.Payment != null)
+            // ─── CoD Automation & Shipping/Delivery tracking: transition to Shipped ───
+            if (previousStatus != "Shipped" && input.Status == "Shipped")
             {
-                order.Payment.PaymentStatus = "Paid";
-                order.Payment.PaidAt = DateTime.Now;
-
-                System.Console.WriteLine($"[PAYMENT LOG] Payment #{order.Payment.PaymentId} for Order #{order.OrderId} automatically set to PAID at {order.Payment.PaidAt}");
+                order.DeliveryDate = DateTime.Now;
+                if (order.Payment != null)
+                {
+                    order.Payment.PaymentStatus = "Paid";
+                    order.Payment.PaidAt = DateTime.Now;
+                    System.Console.WriteLine($"[PAYMENT LOG] Payment #{order.Payment.PaymentId} automatically set to PAID at {order.Payment.PaidAt}");
+                }
             }
 
             await _context.SaveChangesAsync();

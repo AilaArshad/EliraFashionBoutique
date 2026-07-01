@@ -80,8 +80,9 @@ public class ReturnsController : Controller
     {
         try
         {
+            var cutoffDate = DateTime.Now.AddDays(-14);
             var orders = await _context.Orders
-                .Where(o => o.Status == "Shipped")
+                .Where(o => o.Status == "Shipped" && o.DeliveryDate != null && o.DeliveryDate >= cutoffDate)
                 .OrderByDescending(o => o.OrderDate)
                 .Select(o => new {
                     orderId = o.OrderId,
@@ -104,6 +105,18 @@ public class ReturnsController : Controller
     {
         try
         {
+            var order = await _context.Orders.FindAsync(orderId);
+            if (order == null)
+            {
+                return NotFound(new { detail = "Order not found." });
+            }
+
+            var dateToCheck = order.DeliveryDate ?? order.OrderDate;
+            if (dateToCheck < DateTime.Now.AddDays(-14))
+            {
+                return BadRequest(new { detail = "This order is outside the 14-day return window." });
+            }
+
             // Fetch OrderItemIds that are already returned/refunded (with status 'Pending Audit' or 'Approved')
             var activeReturnedOrderItemIds = await _context.ReturnItems
                 .Include(ri => ri.ReturnOrder)
@@ -156,21 +169,37 @@ public class ReturnsController : Controller
                 return NotFound(new { detail = "Order not found." });
             }
 
+            if (order.Status != "Shipped")
+            {
+                return BadRequest(new { detail = "Only shipped orders are eligible for return claims." });
+            }
+
+            if (order.DeliveryDate == null || order.DeliveryDate < DateTime.Now.AddDays(-14))
+            {
+                return BadRequest(new { detail = "The 14-day return window for this order has expired." });
+            }
+
             var orderItem = await _context.OrderItems.FindAsync(input.OrderItemId);
             if (orderItem == null || orderItem.OrderId != input.OrderId)
             {
                 return BadRequest(new { detail = "Order item does not belong to the selected order." });
             }
 
-            // Validate duplicate return
-            var existingReturn = await _context.ReturnItems
+            // Calculate total previously returned quantity for this item
+            var previouslyReturnedQty = await _context.ReturnItems
                 .Include(ri => ri.ReturnOrder)
-                .AnyAsync(ri => ri.OrderItemId == input.OrderItemId &&
-                                (ri.ReturnOrder.ReturnStatus == "Pending Audit" || ri.ReturnOrder.ReturnStatus == "Approved"));
+                .Where(ri => ri.OrderItemId == input.OrderItemId &&
+                            (ri.ReturnOrder.ReturnStatus == "Pending Audit" || ri.ReturnOrder.ReturnStatus == "Approved"))
+                .SumAsync(ri => ri.QuantityReturned);
 
-            if (existingReturn)
+            if (previouslyReturnedQty >= orderItem.Quantity)
             {
-                return BadRequest(new { detail = "This item has already been returned or has an active pending return claim." });
+                return BadRequest(new { detail = "All units of this item have already been returned." });
+            }
+
+            if (input.QuantityReturned < 1 || previouslyReturnedQty + input.QuantityReturned > orderItem.Quantity)
+            {
+                return BadRequest(new { detail = $"Cannot return {input.QuantityReturned} unit(s). Previously returned: {previouslyReturnedQty}, Original quantity: {orderItem.Quantity}." });
             }
 
             // Insert into Return_Order

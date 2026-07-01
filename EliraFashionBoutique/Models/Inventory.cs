@@ -13,6 +13,8 @@ public class Inventory
 
     public int QuantityAvailable { get; set; }
 
+    public int ReorderLevel { get; set; } = 10;
+
     [ForeignKey("VariantId")]
     public virtual ProductVariant? Variant { get; set; }
 }
