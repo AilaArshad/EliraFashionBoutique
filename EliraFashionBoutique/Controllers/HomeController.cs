@@ -9,9 +9,11 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EliraFashionBoutique.Controllers
 {
+    [Authorize(Policy = "AdminAccess")]
     public class HomeController : Controller
     {
         private readonly EliraDbContext _context;
@@ -147,6 +149,7 @@ namespace EliraFashionBoutique.Controllers
             return View();
         }
 
+        [AllowAnonymous]
         [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
         public IActionResult Error()
         {

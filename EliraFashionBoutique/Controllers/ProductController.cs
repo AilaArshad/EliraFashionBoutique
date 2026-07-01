@@ -3,9 +3,11 @@ using EliraFashionBoutique.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json.Serialization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EliraFashionBoutique.Controllers;
 
+[Authorize(Policy = "AdminAccess")]
 public class ProductController : Controller
 {
     private readonly IProductRepository _productRepository;

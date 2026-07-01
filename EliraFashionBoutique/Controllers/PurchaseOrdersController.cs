@@ -2,9 +2,11 @@ using EliraFashionBoutique.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EliraFashionBoutique.Controllers;
 
+[Authorize]
 public class PurchaseOrdersController : Controller
 {
     private readonly EliraDbContext _context;
@@ -15,6 +17,7 @@ public class PurchaseOrdersController : Controller
     }
 
     // GET: /PurchaseOrders
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> Index()
     {
         ViewBag.Suppliers = await _context.Suppliers.ToListAsync();
@@ -24,6 +27,7 @@ public class PurchaseOrdersController : Controller
 
     // GET: /api/categories
     [HttpGet("api/categories")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> GetCategories()
     {
         var categories = await _context.Categories
@@ -38,6 +42,7 @@ public class PurchaseOrdersController : Controller
 
     // GET: /api/suppliers
     [HttpGet("api/suppliers")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> GetSuppliers()
     {
         var suppliers = await _context.Suppliers
@@ -55,6 +60,7 @@ public class PurchaseOrdersController : Controller
 
     // GET: /api/suppliers/{supplierId}/orders
     [HttpGet("api/suppliers/{supplierId}/orders")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> GetSupplierOrders(int supplierId)
     {
         var orders = await _context.PurchaseOrders
@@ -81,6 +87,7 @@ public class PurchaseOrdersController : Controller
 
     // GET: /api/orders/{orderId}
     [HttpGet("api/orders/{orderId}")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> GetOrderDetails(int orderId)
     {
         var order = await _context.PurchaseOrders
@@ -109,6 +116,7 @@ public class PurchaseOrdersController : Controller
     // POST: /api/orders
     // Binds directly to the PurchaseOrder entity model; items arrive via PurchaseOrderItems collection.
     [HttpPost("api/orders")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> CreateOrder([FromBody] PurchaseOrder input)
     {
         if (input == null || input.PurchaseOrderItems == null || !input.PurchaseOrderItems.Any())
@@ -217,6 +225,7 @@ public class PurchaseOrdersController : Controller
 
     // POST: /api/purchaseorders/update
     [HttpPost("api/purchaseorders/update")]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> UpdateOrder([FromBody] PurchaseOrder input)
     {
         if (input == null || input.PurchaseOrderItems == null || !input.PurchaseOrderItems.Any())

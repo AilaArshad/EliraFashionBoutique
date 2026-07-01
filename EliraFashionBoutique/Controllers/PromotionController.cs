@@ -2,8 +2,11 @@ using EliraFashionBoutique.Models;
 using EliraFashionBoutique.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace EliraFashionBoutique.Controllers;
 
+[Authorize]
 public class PromotionController : Controller
 {
     private readonly IPromotionRepository _promotionRepository;
@@ -32,6 +35,7 @@ public class PromotionController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> Save([FromBody] Promotion promotion)
     {
         if (promotion == null)
@@ -80,6 +84,7 @@ public class PromotionController : Controller
     }
 
     [HttpPost]
+    [Authorize(Policy = "AdminAccess")]
     public async Task<IActionResult> Delete(int id)
     {
         try

@@ -2,8 +2,11 @@ using EliraFashionBoutique.Models;
 using EliraFashionBoutique.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
+using Microsoft.AspNetCore.Authorization;
+
 namespace EliraFashionBoutique.Controllers;
 
+[Authorize(Policy = "AdminAccess")]
 public class SupplierController : Controller
 {
     private readonly ISupplierRepository _supplierRepository;

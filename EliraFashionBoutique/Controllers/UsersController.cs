@@ -3,9 +3,11 @@ using EliraFashionBoutique.Repositories.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Identity;
 using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EliraFashionBoutique.Controllers;
 
+[Authorize(Policy = "AdminAccess")]
 public class UsersController : Controller
 {
     private readonly IUserRepository _userRepository;

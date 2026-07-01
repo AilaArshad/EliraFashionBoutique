@@ -44,13 +44,15 @@ window.addEventListener("DOMContentLoaded", async () => {
     }
 
     // Load Initial Data
-    try {
-        await loadCategories();
-        await loadSuppliers();
-        await handleTopCategoryChange();
-        await syncAssociatedOrdersUI(trackedActiveSupplierId);
-    } catch (error) {
-        console.error("Initialization error:", error);
+    if (formElement && formSupplierSelect && formCategorySelect) {
+        try {
+            await loadCategories();
+            await loadSuppliers();
+            await handleTopCategoryChange();
+            await syncAssociatedOrdersUI(trackedActiveSupplierId);
+        } catch (error) {
+            console.error("Initialization error:", error);
+        }
     }
 
     // Event listener for Master Create Button

@@ -1,9 +1,11 @@
 using EliraFashionBoutique.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace EliraFashionBoutique.Controllers;
 
+[Authorize]
 public class OrdersController : Controller
 {
     private readonly EliraDbContext _context;

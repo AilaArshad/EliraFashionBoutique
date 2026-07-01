@@ -35,87 +35,123 @@
 
         <!-- Navigation -->
         <ul class="sidebar-nav">
-            <li class="sidebar-nav-item">
-                <a href="/"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
-                   data-tooltip="System Dashboard">
-                    <i class="fa-solid fa-gauge nav-icon"></i>
-                    <span class="nav-label">System Dashboard</span>
-                </a>
-            </li>
+            @if (User.IsInRole("Sales Manager"))
+            {
+                <li class="sidebar-nav-item">
+                    <a href="/Orders/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")"
+                       data-tooltip="Customer Order">
+                        <i class="fa-solid fa-cart-shopping nav-icon"></i>
+                        <span class="nav-label">Customer Orders</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-nav-item">
-                <a href="/Product/Index"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "active" : "")"
-                   data-tooltip="Product Catalog">
-                    <i class="fa-solid fa-tags nav-icon"></i>
-                    <span class="nav-label">Product Catalog</span>
-                </a>
-            </li>
+                <li class="sidebar-nav-item">
+                    <a href="/Returns/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Returns" ? "active" : "")"
+                       data-tooltip="Returns & Refunds">
+                        <i class="fa-solid fa-rotate-left nav-icon"></i>
+                        <span class="nav-label">Returns & Refunds</span>
+                    </a>
+                </li>
+            }
+            else
+            {
+                <li class="sidebar-nav-item">
+                    <a href="/"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" ? "active" : "")"
+                       data-tooltip="System Dashboard">
+                        <i class="fa-solid fa-gauge nav-icon"></i>
+                        <span class="nav-label">System Dashboard</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-nav-item">
-                <a href="/Category/Index"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "active" : "")"
-                   data-tooltip="Category Catalog">
-                    <i class="fa-solid fa-boxes-stacked nav-icon"></i>
-                    <span class="nav-label">Category Catalog</span>
-                </a>
-            </li>
+                <li class="sidebar-nav-item">
+                    <a href="/Product/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Product" ? "active" : "")"
+                       data-tooltip="Product Catalog">
+                        <i class="fa-solid fa-tags nav-icon"></i>
+                        <span class="nav-label">Product Catalog</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-nav-item">
-                <a href="/Orders/Index"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")"
-                   data-tooltip="Customer Order">
-                    <i class="fa-solid fa-cart-shopping nav-icon"></i>
-                    <span class="nav-label">Customer Orders</span>
-                </a>
-            </li>
+                <li class="sidebar-nav-item">
+                    <a href="/Category/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Category" ? "active" : "")"
+                       data-tooltip="Category Catalog">
+                        <i class="fa-solid fa-boxes-stacked nav-icon"></i>
+                        <span class="nav-label">Category Catalog</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-nav-item">
-                <a href="/PurchaseOrders/Index"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PurchaseOrders" ? "active" : "")"
-                   data-tooltip="Supplier Order Catalog">
-                    <i class="fa-solid fa-truck nav-icon"></i>
-                    <span class="nav-label">Supplier Orders</span>
-                </a>
-            </li>
+                <li class="sidebar-nav-item">
+                    <a href="/Orders/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Orders" ? "active" : "")"
+                       data-tooltip="Customer Order">
+                        <i class="fa-solid fa-cart-shopping nav-icon"></i>
+                        <span class="nav-label">Customer Orders</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-nav-item">
-                <a href="/Inventory/Index"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "active" : "")"
-                   data-tooltip="Inventory Catalog">
-                    <i class="fa-solid fa-warehouse nav-icon"></i>
-                    <span class="nav-label">Inventory Stock</span>
-                </a>
-            </li>
+                <li class="sidebar-nav-item">
+                    <a href="/PurchaseOrders/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "PurchaseOrders" ? "active" : "")"
+                       data-tooltip="Supplier Order Catalog">
+                        <i class="fa-solid fa-truck nav-icon"></i>
+                        <span class="nav-label">Supplier Orders</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-nav-item">
-                <a href="/Returns/Index"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Returns" ? "active" : "")"
-                   data-tooltip="Returns & Refunds">
-                    <i class="fa-solid fa-rotate-left nav-icon"></i>
-                    <span class="nav-label">Returns & Refunds</span>
-                </a>
-            </li>
+                <li class="sidebar-nav-item">
+                    <a href="/Inventory/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Inventory" ? "active" : "")"
+                       data-tooltip="Inventory Catalog">
+                        <i class="fa-solid fa-warehouse nav-icon"></i>
+                        <span class="nav-label">Inventory Stock</span>
+                    </a>
+                </li>
 
-            <li class="sidebar-nav-item">
-                <a href="/Users/Index"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")"
-                   data-tooltip="User Management">
-                    <i class="fa-solid fa-user-gear nav-icon"></i>
-                    <span class="nav-label">User Management</span>
-                </a>
-            </li>
+                <li class="sidebar-nav-item">
+                    <a href="/Returns/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Returns" ? "active" : "")"
+                       data-tooltip="Returns & Refunds">
+                        <i class="fa-solid fa-rotate-left nav-icon"></i>
+                        <span class="nav-label">Returns & Refunds</span>
+                    </a>
+                </li>
 
-            <!-- ═══ NEW: REPORTS MODULE ═══ -->
-            <li class="sidebar-nav-item">
-                <a href="/Reports/Index"
-                   class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "active" : "")"
-                   data-tooltip="Reports">
-                    <i class="fa-solid fa-chart-line nav-icon"></i>
-                    <span class="nav-label">Reports</span>
-                </a>
-            </li>
+                <li class="sidebar-nav-item">
+                    <a href="/Users/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Users" ? "active" : "")"
+                       data-tooltip="User Management">
+                        <i class="fa-solid fa-user-gear nav-icon"></i>
+                        <span class="nav-label">User Management</span>
+                    </a>
+                </li>
+
+                <!-- ═══ NEW: REPORTS MODULE ═══ -->
+                <li class="sidebar-nav-item">
+                    <a href="/Reports/Index"
+                       class="sidebar-nav-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Reports" ? "active" : "")"
+                       data-tooltip="Reports">
+                        <i class="fa-solid fa-chart-line nav-icon"></i>
+                        <span class="nav-label">Reports</span>
+                    </a>
+                </li>
+            }
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <li class="sidebar-nav-item">
+                    <form asp-action="Logout" asp-controller="Account" method="post" id="logoutForm" style="display:none;"></form>
+                    <a href="javascript:void(0);" onclick="document.getElementById('logoutForm').submit();"
+                       class="sidebar-nav-link"
+                       data-tooltip="Sign Out">
+                        <i class="fa-solid fa-right-from-bracket nav-icon" style="color: #E0566F;"></i>
+                        <span class="nav-label" style="color: #E0566F;">Sign Out</span>
+                    </a>
+                </li>
+            }
         </ul>
 
         <!-- Collapse Toggle -->
